@@ -4,57 +4,122 @@
 #include <fstream>
 #include <locale>
 #include <codecvt>
+#include <iomanip>
 #include <detours/detours.h>
 #include <nlohmann/json.hpp>
+#include "dllmain.h"
 #include "internalHook.h"
 
 #pragma comment(lib, "detours.lib")
 
+// TODO: 32비트 환경에서는 다른 경로 지원 필요
 constexpr auto COCOS_LIB_DEFAULT_PATH = L"C:/Program Files (x86)/Steam/steamapps/common/Geometry Dash/libcocos2d.dll";
 
 using namespace std;
 using json = nlohmann::json;
 
-// Currently, hooking function 004228E0 which is responsible to color texts throws string out of range exception
-// so codes associated with it are commented out
-
+// TODO: 안쓰는 함수 정리
 using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* newString, bool needUpdateLabel);
 using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const char* format, va_list ap);
-// using GMDInternal_004228E0_fn = UINT(__thiscall*)(void* pThis, void* arg1, char* title, char* btn1Text, char* btn2Text, void* width, void* arg6, void* arg7, char* mainText, void* arg9, void* arg10, void* arg11, int mainTextLength, int mainTextLengthDivideTen);
+using CCLabelBMFont_getString_fn = const char*(__thiscall*)(void* pThis);
+using CCLabelBMFont_setAlignment_fn = void(__thiscall*)(void* pThis, int alignment);
+using CCNode_getChildren_fn = void* (__thiscall*)(void* pThis);
+using CCArray_objectAtIndex_fn = void*(__thiscall*)(void* pThis, unsigned int index);
+using CCNodeRGBA_getColor_fn = const ccColor3B& (__thiscall*)(void* pThis);
+using CCSprite_setOpacity_fn = void(__thiscall*)(void* pThis, unsigned char opacity);
+using CCNode_getChildByTag_fn = void* (__thiscall*)(void* pThis, int tag);
+using CCNodeRGBA_getOpacity_fn = uint8_t(__thiscall*)(void* pThis);
+using CCLabelBMFont_setAnchorPoint_fn = void(__thiscall*)(void* pThis, void* anchorPoint);
+using CCNode_getAnchorPoint_fn = void* (__thiscall*)(void* pThis);
+using CCPoint_setPoint_fn = void(__thiscall*)(void* pThis, float x, float y);
+using CCDirector_sharedDirector_fn = void*(*)();
+using CCDirector_getWinSize_fn = void* (__thiscall*)(void* pThis);
+using CCSprite_setPosition_fn = void(__thiscall*)(void* pThis, float x, float y);
+using CCNode_getPosition_fn = void*(__thiscall*)(void* pThis);
+using CCSprite_ignoreAnchorPointForPosition_fn = void(__thiscall*)(void* pThis, bool ignore);
 
-// store original function for further use
-CCLabelBMFont_setString_fn originalSetStringFn;
-CCString_initWithFormatAndValist_fn originalInitWithFormatAndValistFn;
-// GMDInternal_004228E0_fn original004228E0Fn;
-//UINT __fastcall _004228E0_hookFn(void* pThis, void* _EDX, void* arg1, char* title, char* btn1Text, char* btn2Text, void* width, void* arg6, void* arg7, char* mainText, void* arg9, void* arg10, void* arg11, int mainTextLength, int mainTextLengthDivideTen)
-//{
-//	char newTitle[10] = "Greetings";
-//	char newMainText[37] = "Do you really want to <cg>quit?</cg>";
-//	return original004228E0Fn(pThis, arg1, newTitle, btn1Text, btn2Text, width, arg6, arg7, newMainText, arg9, arg10, arg11, 38, 0x2f);
-// }
+CCLabelBMFont_setString_fn CCLabelBMFont_setString;
+CCString_initWithFormatAndValist_fn CCString_initWithFormatAndValist;
+CCLabelBMFont_getString_fn CCLabelBMFont_getString;
+CCLabelBMFont_setAlignment_fn CCLabelBMFont_setAlignment;
+CCNode_getChildren_fn CCNode_getChildren;
+CCArray_objectAtIndex_fn CCArray_objectAtIndex;
+CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
+CCSprite_setOpacity_fn CCSprite_setOpacity;
+CCNode_getChildByTag_fn CCNode_getChildByTag;
+CCNodeRGBA_getOpacity_fn CCNodeRGBA_getOpacity;
+CCLabelBMFont_setAnchorPoint_fn CCLabelBMFont_setAnchorPoint;
+CCNode_getAnchorPoint_fn CCNode_getAnchorPoint;
+CCPoint_setPoint_fn CCPoint_setPoint;
+CCDirector_sharedDirector_fn CCDirector_sharedDirector;
+CCDirector_getWinSize_fn CCDirector_getWinSize;
+CCSprite_setPosition_fn CCSprite_setPosition;
+CCNode_getPosition_fn CCNode_getPosition;
+CCSprite_ignoreAnchorPointForPosition_fn CCSprite_ignoreAnchorPointForPosition;
 
-// this function gets called when CCLabelBMFont::setString method which is mainely used for text rendering in game gets called
-// Note: When the game renders long text, it splits text into multiple lines and creates individual labels
-void __fastcall setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
-	std::string hookedStr = labelStr;
-	if (hookedStr.find("Bloodlust") != std::string::npos)
+json translation;
+
+/* CCLabelBMFont::setString이 호출될때 대신 불리는 함수입니다
+Note: 두 줄 이상의 텍스트의 경우 GMD는 cocos2dx의 자동 개행 기능을 이용하지 않고 줄마다 서도 다른 CCLabelBMFont를 생성합니다.
+	그렇기 때문에 각각의 줄만을 보고는 무슨 텍스트를 출력 중인지 알 수 없는 경우가 생길 수 있고, 따라서
+	한 줄마다 그에 해당하는 번역을 출력하면 잘못된 번역을 보여줄 가능성이 있습니다.
+
+		Ex) This trigger moves...
+			mode. <-- 이 단어 하나만 보고는 무슨말을 하고 있는 것인지 알 수 없습니다.
+
+	따라서 텍스트의 첫 줄을 보고 번역된 텍스트 전체를 하나의 CCLabelBMFont안에 렌더링 한 후(거의 대부분의 텍스트는 첫 줄만으로 구별할 수 있습니다)
+	이어지는 CCLabelBMFont들은 보이지 않게 설정해야 합니다.
+TODO: 색깔 설정 지원
+TODO: 마지막 공백 문자 이용해서 개선
+*/
+		 
+void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
+	// 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
+	static bool willNextLabelBeHidden = false;
+	std::string lookedUpStr = translation["lookup"].value(labelStr, "TRANSLATION_NOT_FOUND");
+	if (lookedUpStr != std::string("TRANSLATION_NOT_FOUND"))
 	{
-		// only for test purpose
-		// this code needs to be moved to dllmain
-		std::ifstream translationFileStream("./translation-test.json");
-		json translation;
-		translationFileStream >> translation;
-		std::string translatedText = translation["I have been expecting you"];
-		return originalSetStringFn(pThis, translatedText.c_str(), needUpdateLabel);
+		std::string translatedStr = lookedUpStr;
+		if (lookedUpStr.substr(0, 1).compare("_") == 0)
+		{
+			// 두 줄 이상 텍스트
+			if (willNextLabelBeHidden)
+			{
+				// 두 줄 이상 텍스트의 마지막은 공백 문자
+				if (std::isspace(lookedUpStr.back()))
+				{
+					willNextLabelBeHidden = false;
+				}
+				return;
+			}
+			else
+			{
+				translatedStr = translation["multiline_translations"].value(lookedUpStr, "TRANSLATION_NOT_FOUND");
+				willNextLabelBeHidden = true;
+			}
+
+		}
+		if (translatedStr != std::string("TRANSLATION_NOT_FOUND"))
+		{
+			// 가운데 정렬
+			CCLabelBMFont_setAlignment(pThis, 1);
+
+			CCSprite_ignoreAnchorPointForPosition(pThis, false);
+			void* anchorPoint = CCNode_getAnchorPoint(pThis);
+			CCPoint_setPoint(anchorPoint, 1, 1);
+			CCLabelBMFont_setAnchorPoint(pThis, anchorPoint);
+
+			return CCLabelBMFont_setString(pThis, translatedStr.c_str(), needUpdateLabel);
+		}
 	}
-	return originalSetStringFn(pThis, labelStr, needUpdateLabel);
+	willNextLabelBeHidden = false;
+	return CCLabelBMFont_setString(pThis, labelStr, needUpdateLabel);
 }
 
-// this function gets called when the game creates CCString(string type used in cocos2dx game engine) with format text
-// Ex. "Stereo Madness\n<cg>Total attempts:</c>%s" -> the function replaces %s with real value passed as va_list
-bool __fastcall initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
+// CCString::initWithFormatAndValist가 호출될때 대신 불리는 함수입니다
+bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
 {
-	return originalInitWithFormatAndValistFn(pThis, format, ap);
+	return CCString_initWithFormatAndValist(pThis, format, ap);
 }
 
 
@@ -77,43 +142,66 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	case DLL_PROCESS_ATTACH:
 	{
 		DetourRestoreAfterWith();
-		// hook CCLabelBMFont::create function
-		HINSTANCE cocosLib = LoadLibrary(COCOS_LIB_DEFAULT_PATH);
-		if (cocosLib != NULL) 
+
+		std::ifstream translationFileStream("C:\\Users\\vhffl\\Documents\\reverse\\languagePatch\\translation\\ko-kr_low.json");
+		if (translationFileStream.is_open())
 		{
-			originalSetStringFn = (CCLabelBMFont_setString_fn)GetProcAddress(cocosLib, "?setString@CCLabelBMFont@cocos2d@@UAEXPBD_N@Z");
-			originalInitWithFormatAndValistFn = (CCString_initWithFormatAndValist_fn)GetProcAddress(cocosLib, "?initWithFormatAndValist@CCString@cocos2d@@AAE_NPBDPAD@Z");
-			// original004228E0Fn = (GMDInternal_004228E0_fn)getRVAFromOffset(0x000228E0);
-			if (originalSetStringFn != NULL)
+			translationFileStream >> translation;
+
+			HINSTANCE cocosLib = LoadLibrary(COCOS_LIB_DEFAULT_PATH);
+			if (cocosLib != NULL)
 			{
+				// cocos2dx에서 필요한 함수들 불러오기
+				// TODO: 비주얼 스튜디오의 자동 불러오기 기능 이용?
+				CCLabelBMFont_setString = (CCLabelBMFont_setString_fn)GetProcAddress(cocosLib, "?setString@CCLabelBMFont@cocos2d@@UAEXPBD_N@Z");
+				CCLabelBMFont_getString = (CCLabelBMFont_getString_fn)GetProcAddress(cocosLib, "?getString@CCLabelBMFont@cocos2d@@UAEPBDXZ");
+				CCLabelBMFont_setAlignment = (CCLabelBMFont_setAlignment_fn)GetProcAddress(cocosLib, "?setAlignment@CCLabelBMFont@cocos2d@@UAEXW4CCTextAlignment@2@@Z");
+				CCString_initWithFormatAndValist = (CCString_initWithFormatAndValist_fn)GetProcAddress(cocosLib, "?initWithFormatAndValist@CCString@cocos2d@@AAE_NPBDPAD@Z");
+				CCNode_getChildren = (CCNode_getChildren_fn)GetProcAddress(cocosLib, "?getChildren@CCNode@cocos2d@@UAEPAVCCArray@2@XZ");
+				CCArray_objectAtIndex = (CCArray_objectAtIndex_fn)GetProcAddress(cocosLib, "?objectAtIndex@CCArray@cocos2d@@QAEPAVCCObject@2@I@Z");
+				CCNodeRGBA_getColor = (CCNodeRGBA_getColor_fn)GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ");
+				CCSprite_setOpacity = (CCSprite_setOpacity_fn)GetProcAddress(cocosLib, "?setOpacity@CCSprite@cocos2d@@UAEXE@Z");
+				CCNode_getChildByTag = (CCNode_getChildByTag_fn)GetProcAddress(cocosLib, "?getChildByTag@CCNode@cocos2d@@UAEPAV12@H@Z");
+				CCNodeRGBA_getOpacity = (CCNodeRGBA_getOpacity_fn)GetProcAddress(cocosLib, "?getOpacity@CCNodeRGBA@cocos2d@@UAEEXZ");
+				CCLabelBMFont_setAnchorPoint = (CCLabelBMFont_setAnchorPoint_fn)GetProcAddress(cocosLib, "?setAnchorPoint@CCLabelBMFont@cocos2d@@UAEXABVCCPoint@2@@Z");
+				CCNode_getAnchorPoint = (CCNode_getAnchorPoint_fn)GetProcAddress(cocosLib, "?getAnchorPoint@CCNode@cocos2d@@UAEABVCCPoint@2@XZ");
+				CCPoint_setPoint = (CCPoint_setPoint_fn)GetProcAddress(cocosLib, "?setPoint@CCPoint@cocos2d@@QAEXMM@Z");
+				CCDirector_sharedDirector = (CCDirector_sharedDirector_fn)GetProcAddress(cocosLib, "?sharedDirector@CCDirector@cocos2d@@SAPAV12@XZ");
+				CCDirector_getWinSize = (CCDirector_getWinSize_fn)GetProcAddress(cocosLib, "?getWinSize@CCDirector@cocos2d@@QAE?AVCCSize@2@XZ");
+				CCSprite_setPosition = (CCSprite_setPosition_fn)GetProcAddress(cocosLib, "?setPosition@CCSprite@cocos2d@@UAEXABVCCPoint@2@@Z");
+				CCNode_getPosition = (CCNode_getPosition_fn)GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEABVCCPoint@2@XZ");
+				CCSprite_ignoreAnchorPointForPosition = (CCSprite_ignoreAnchorPointForPosition_fn)GetProcAddress(cocosLib, "?ignoreAnchorPointForPosition@CCSprite@cocos2d@@UAEX_N@Z");
+
+				// CCLabelBMFont::setString과 CCString::initWithFormatAndValist에 훅을 걸어 해당 함수들이 게임에서 호출될 시 
+				// 이 dll의 함수들이 대신 호출되게 합니다
 				DetourTransactionBegin();
 				DetourUpdateThread(GetCurrentThread());
-				DetourAttach(&(PVOID&)originalSetStringFn, setString_hookFn);
-				DetourAttach(&(PVOID&)originalInitWithFormatAndValistFn, initWithFormatAndValist_hookFn);
-				// DetourAttach(&(PVOID&)original004228E0Fn, _004228E0_hookFn);
+				DetourAttach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
+				DetourAttach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
 				error = DetourTransactionCommit();
 
 				if (error != NO_ERROR)
 				{
-					MessageBoxA(0, "detour failed", "", NULL);
-				}	
+					MessageBoxA(0, "detour failed", "Error", NULL);
+				}
+
 			}
 			else
 			{
-				MessageBoxA(0, "Failed to load CCLAbelBMFont::create function from libcocos2d.dll", "Error", NULL);
+				MessageBoxA(0, "Failed to load libcocos2d.dll", "Error", NULL);
 			}
-		} else
+		}
+		else
 		{
-			MessageBoxA(0, "Failed to load libcocos2d.dll", "Error", NULL);
+			MessageBoxA(NULL, "failed to load translation file", "Error", NULL);
 		}
 		break;
 	}
 	case DLL_PROCESS_DETACH:
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
-		DetourDetach(&(PVOID&)originalSetStringFn, setString_hookFn);
-		DetourDetach(&(PVOID&)originalInitWithFormatAndValistFn, initWithFormatAndValist_hookFn);
-		// DetourDetach(&(PVOID&)original004228E0Fn, _004228E0_hookFn);
+		DetourDetach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
+		DetourDetach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
 		DetourTransactionCommit();
 		break;
 	}
