@@ -10,6 +10,7 @@
 #include <nlohmann/json.hpp>
 #include "dllmain.h"
 #include "internalHook.h"
+#include "CCSize.h"
 
 #pragma comment(lib, "detours.lib")
 
@@ -36,6 +37,14 @@ using CCNode_getParent_fn = void* (__thiscall*)(void* pThis);
 using CCNode_setPositionY_fn = void(__thiscall*)(void* pThis, float y);
 using CCNode_getPositionXY_fn = void(__thiscall*)(void* pThis, float* x, float* y);
 using CCNode_transform_fn = void* (__thiscall*)(void* pThis);
+using CCDirector_getRunningScene_fn = void* (__thiscall*)(void* pThis);
+using CCNode_addChild_fn = void* (__thiscall*)(void* pThis, void* child);
+using CCDirector_sharedDirector_fn = void* (*)();
+using CCNode_removeFromParentAndCleanup_fn = void(__thiscall*)(void* pThis, bool cleanup);
+using CCNode_setZOrder_fn = void(__thiscall*)(void* pThis, int zOrder);
+using CCDirector_getVisibleSize_fn = void* (__thiscall*)(void* pThis);
+using CCNode_getContentSize_fn = const CCSize& (__thiscall*)(void* pThis);
+using CCNode_setPositionXY_fn = void (__thiscall*)(void* pThis, float x, float y);
 
 CCLabelBMFont_setString_fn CCLabelBMFont_setString;
 CCString_initWithFormatAndValist_fn CCString_initWithFormatAndValist;
@@ -52,6 +61,14 @@ CCNode_getParent_fn CCNode_getParent;
 CCNode_setPositionY_fn CCNode_setPositionY;
 CCNode_getPositionXY_fn CCNode_getPositionXY;
 CCNode_transform_fn CCNode_transform;
+CCDirector_sharedDirector_fn CCDirector_sharedDirector;
+CCDirector_getRunningScene_fn CCDirector_getRunningScene;
+CCNode_addChild_fn CCNode_addChild;
+CCNode_removeFromParentAndCleanup_fn CCNode_removeFromParentAndCleanup;
+CCNode_setZOrder_fn CCNode_setZOrder;
+CCDirector_getVisibleSize_fn CCDirector_getVisibleSize;
+CCNode_getContentSize_fn CCNode_getContentSize;
+CCNode_setPositionXY_fn CCNode_setPositionXY;
 
 json translation;
 
@@ -90,7 +107,7 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
         {
             std::string translatedStr;
             void* labelToRenderStr = pThis;
-            double labelToRenderstrIndex = 0;
+            int labelToRenderstrIndex = 0;
 
             if (translatingMultilineStr)
             {
@@ -123,15 +140,31 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
                     }
                     multilinePartLabels.clear();
                 }
+                
+                // parent를 변경하지 않고 포지션을 설정시 위치가 제대로 잡히지 않습니다
+                // 따라서 현재 scene을 parent로 설정한 뒤 화면 중간으로 위치를 잡습니다
+                // TODO: 여러 줄 텍스트일때만 적용
+                void* sharedDirector = CCDirector_sharedDirector();
+                void* runningScene = CCDirector_getRunningScene(sharedDirector);
+                CCNode_removeFromParentAndCleanup(labelToRenderStr, true);
+                CCNode_addChild(runningScene, labelToRenderStr);
+                CCSize sceneSize = CCNode_getContentSize(runningScene);
+                void* labelPos = CCNode_getPosition(labelToRenderStr);
+                CCPoint_setPoint(labelPos, sceneSize.width / 2, sceneSize.height / 2);
+                CCSprite_setPosition(labelToRenderStr, labelPos);
+
+                // 앵커포인트 설정
+                // 다음 링크를 참조해주세요:
+                // http://docs.cocos.com/creator/manual/en/content-workflow/transform.html#anchor
+                void* anchorPoint = CCNode_getAnchorPoint(labelToRenderStr);
+                CCPoint_setPoint(anchorPoint, 0.5, 0.5);
+                CCLabelBMFont_setAnchorPoint(labelToRenderStr, anchorPoint);
+
+                // 텍스트가 가장 위에 오도록 설정
+                CCNode_setZOrder(labelToRenderStr, INT_MAX);
+
                 // 가운데 정렬
                 CCLabelBMFont_setAlignment(labelToRenderStr, 1);
-
-                // anchorpoint 설정
-                // 일부 텍스트들에 대해서만 실험되었습니다
-                void* anchorPoint = CCNode_getAnchorPoint(labelToRenderStr);
-                // 휴리스틱 값, 잘못 작동할 확률이 높습니다
-                CCPoint_setPoint(anchorPoint, 0.17, 0.15);
-                CCLabelBMFont_setAnchorPoint(labelToRenderStr, anchorPoint);
 
                 translatingMultilineStr = false;
                 return CCLabelBMFont_setString(labelToRenderStr, translatedStr.c_str(), needUpdateLabel);
@@ -179,7 +212,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             if (cocosLib != NULL)
             {
                 // cocos2dx에서 필요한 함수들 불러오기
-                // TODO: 비주얼 스튜디오의 자동 불러오기 기능 이용?
+                // TODO: reintrpret_cast 사용
                 CCLabelBMFont_setString = (CCLabelBMFont_setString_fn)GetProcAddress(cocosLib, "?setString@CCLabelBMFont@cocos2d@@UAEXPBD_N@Z");
                 CCLabelBMFont_setAlignment = (CCLabelBMFont_setAlignment_fn)GetProcAddress(cocosLib, "?setAlignment@CCLabelBMFont@cocos2d@@UAEXW4CCTextAlignment@2@@Z");
                 CCString_initWithFormatAndValist = (CCString_initWithFormatAndValist_fn)GetProcAddress(cocosLib, "?initWithFormatAndValist@CCString@cocos2d@@AAE_NPBDPAD@Z");
@@ -195,6 +228,14 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                 CCNode_setPositionY = (CCNode_setPositionY_fn)GetProcAddress(cocosLib, "?setPositionY@CCNode@cocos2d@@UAEXM@Z");
                 CCNode_getPositionXY = (CCNode_getPositionXY_fn)GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEXPAM0@Z");
                 CCNode_transform = (CCNode_transform_fn)GetProcAddress(cocosLib, "?transform@CCNode@cocos2d@@QAEXXZ");
+                CCDirector_sharedDirector = (CCDirector_sharedDirector_fn)GetProcAddress(cocosLib, "?sharedDirector@CCDirector@cocos2d@@SAPAV12@XZ");
+                CCDirector_getRunningScene = (CCDirector_getRunningScene_fn)GetProcAddress(cocosLib, "?getRunningScene@CCDirector@cocos2d@@QAEPAVCCScene@2@XZ");
+                CCNode_addChild = (CCNode_addChild_fn)GetProcAddress(cocosLib, "?addChild@CCNode@cocos2d@@UAEXPAV12@@Z");
+                CCNode_removeFromParentAndCleanup = (CCNode_removeFromParentAndCleanup_fn)GetProcAddress(cocosLib, "?removeFromParentAndCleanup@CCNode@cocos2d@@UAEX_N@Z");
+                CCNode_setZOrder = (CCNode_setZOrder_fn)GetProcAddress(cocosLib, "?setZOrder@CCNode@cocos2d@@UAEXH@Z");
+                CCDirector_getVisibleSize = (CCDirector_getVisibleSize_fn)GetProcAddress(cocosLib, "?getVisibleSize@CCDirector@cocos2d@@QAE?AVCCSize@2@XZ");
+                CCNode_getContentSize = (CCNode_getContentSize_fn)GetProcAddress(cocosLib, "?getContentSize@CCNode@cocos2d@@UBEABVCCSize@2@XZ");
+                CCNode_setPositionXY = (CCNode_setPositionXY_fn)GetProcAddress(cocosLib, "?setPosition@CCNode@cocos2d@@UAEXMM@Z");
 
                 // CCLabelBMFont::setString과 CCString::initWithFormatAndValist에 훅을 걸어 해당 함수들이 게임에서 호출될 시 
                 // 이 dll의 함수들이 대신 호출되게 합니다
