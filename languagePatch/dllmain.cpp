@@ -21,41 +21,29 @@ using json = nlohmann::json;
 // TODO: 안쓰는 함수 정리
 using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* newString, bool needUpdateLabel);
 using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const char* format, va_list ap);
-using CCLabelBMFont_getString_fn = const char*(__thiscall*)(void* pThis);
 using CCLabelBMFont_setAlignment_fn = void(__thiscall*)(void* pThis, int alignment);
-using CCNode_getChildren_fn = void* (__thiscall*)(void* pThis);
-using CCArray_objectAtIndex_fn = void*(__thiscall*)(void* pThis, unsigned int index);
 using CCNodeRGBA_getColor_fn = const ccColor3B& (__thiscall*)(void* pThis);
-using CCSprite_setOpacity_fn = void(__thiscall*)(void* pThis, unsigned char opacity);
 using CCNode_getChildByTag_fn = void* (__thiscall*)(void* pThis, int tag);
-using CCNodeRGBA_getOpacity_fn = uint8_t(__thiscall*)(void* pThis);
 using CCLabelBMFont_setAnchorPoint_fn = void(__thiscall*)(void* pThis, void* anchorPoint);
 using CCNode_getAnchorPoint_fn = void* (__thiscall*)(void* pThis);
 using CCPoint_setPoint_fn = void(__thiscall*)(void* pThis, float x, float y);
-using CCDirector_sharedDirector_fn = void*(*)();
-using CCDirector_getWinSize_fn = void* (__thiscall*)(void* pThis);
 using CCSprite_setPosition_fn = void(__thiscall*)(void* pThis, float x, float y);
 using CCNode_getPosition_fn = void*(__thiscall*)(void* pThis);
 using CCSprite_ignoreAnchorPointForPosition_fn = void(__thiscall*)(void* pThis, bool ignore);
+using CCNode_getParent_fn = void* (__thiscall*)(void* pThis);
 
 CCLabelBMFont_setString_fn CCLabelBMFont_setString;
 CCString_initWithFormatAndValist_fn CCString_initWithFormatAndValist;
-CCLabelBMFont_getString_fn CCLabelBMFont_getString;
 CCLabelBMFont_setAlignment_fn CCLabelBMFont_setAlignment;
-CCNode_getChildren_fn CCNode_getChildren;
-CCArray_objectAtIndex_fn CCArray_objectAtIndex;
 CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
-CCSprite_setOpacity_fn CCSprite_setOpacity;
 CCNode_getChildByTag_fn CCNode_getChildByTag;
-CCNodeRGBA_getOpacity_fn CCNodeRGBA_getOpacity;
 CCLabelBMFont_setAnchorPoint_fn CCLabelBMFont_setAnchorPoint;
 CCNode_getAnchorPoint_fn CCNode_getAnchorPoint;
 CCPoint_setPoint_fn CCPoint_setPoint;
-CCDirector_sharedDirector_fn CCDirector_sharedDirector;
-CCDirector_getWinSize_fn CCDirector_getWinSize;
 CCSprite_setPosition_fn CCSprite_setPosition;
 CCNode_getPosition_fn CCNode_getPosition;
 CCSprite_ignoreAnchorPointForPosition_fn CCSprite_ignoreAnchorPointForPosition;
+CCNode_getParent_fn CCNode_getParent;
 
 json translation;
 
@@ -154,20 +142,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 				// cocos2dx에서 필요한 함수들 불러오기
 				// TODO: 비주얼 스튜디오의 자동 불러오기 기능 이용?
 				CCLabelBMFont_setString = (CCLabelBMFont_setString_fn)GetProcAddress(cocosLib, "?setString@CCLabelBMFont@cocos2d@@UAEXPBD_N@Z");
-				CCLabelBMFont_getString = (CCLabelBMFont_getString_fn)GetProcAddress(cocosLib, "?getString@CCLabelBMFont@cocos2d@@UAEPBDXZ");
 				CCLabelBMFont_setAlignment = (CCLabelBMFont_setAlignment_fn)GetProcAddress(cocosLib, "?setAlignment@CCLabelBMFont@cocos2d@@UAEXW4CCTextAlignment@2@@Z");
 				CCString_initWithFormatAndValist = (CCString_initWithFormatAndValist_fn)GetProcAddress(cocosLib, "?initWithFormatAndValist@CCString@cocos2d@@AAE_NPBDPAD@Z");
-				CCNode_getChildren = (CCNode_getChildren_fn)GetProcAddress(cocosLib, "?getChildren@CCNode@cocos2d@@UAEPAVCCArray@2@XZ");
-				CCArray_objectAtIndex = (CCArray_objectAtIndex_fn)GetProcAddress(cocosLib, "?objectAtIndex@CCArray@cocos2d@@QAEPAVCCObject@2@I@Z");
 				CCNodeRGBA_getColor = (CCNodeRGBA_getColor_fn)GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ");
-				CCSprite_setOpacity = (CCSprite_setOpacity_fn)GetProcAddress(cocosLib, "?setOpacity@CCSprite@cocos2d@@UAEXE@Z");
 				CCNode_getChildByTag = (CCNode_getChildByTag_fn)GetProcAddress(cocosLib, "?getChildByTag@CCNode@cocos2d@@UAEPAV12@H@Z");
-				CCNodeRGBA_getOpacity = (CCNodeRGBA_getOpacity_fn)GetProcAddress(cocosLib, "?getOpacity@CCNodeRGBA@cocos2d@@UAEEXZ");
 				CCLabelBMFont_setAnchorPoint = (CCLabelBMFont_setAnchorPoint_fn)GetProcAddress(cocosLib, "?setAnchorPoint@CCLabelBMFont@cocos2d@@UAEXABVCCPoint@2@@Z");
 				CCNode_getAnchorPoint = (CCNode_getAnchorPoint_fn)GetProcAddress(cocosLib, "?getAnchorPoint@CCNode@cocos2d@@UAEABVCCPoint@2@XZ");
 				CCPoint_setPoint = (CCPoint_setPoint_fn)GetProcAddress(cocosLib, "?setPoint@CCPoint@cocos2d@@QAEXMM@Z");
-				CCDirector_sharedDirector = (CCDirector_sharedDirector_fn)GetProcAddress(cocosLib, "?sharedDirector@CCDirector@cocos2d@@SAPAV12@XZ");
-				CCDirector_getWinSize = (CCDirector_getWinSize_fn)GetProcAddress(cocosLib, "?getWinSize@CCDirector@cocos2d@@QAE?AVCCSize@2@XZ");
 				CCSprite_setPosition = (CCSprite_setPosition_fn)GetProcAddress(cocosLib, "?setPosition@CCSprite@cocos2d@@UAEXABVCCPoint@2@@Z");
 				CCNode_getPosition = (CCNode_getPosition_fn)GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEABVCCPoint@2@XZ");
 				CCSprite_ignoreAnchorPointForPosition = (CCSprite_ignoreAnchorPointForPosition_fn)GetProcAddress(cocosLib, "?ignoreAnchorPointForPosition@CCSprite@cocos2d@@UAEX_N@Z");
