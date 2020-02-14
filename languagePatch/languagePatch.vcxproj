@@ -99,6 +99,9 @@
       <AdditionalLibraryDirectories>C:\Users\vhffl\Documents\reverse\languagePatch\languagePatch\lib\Detours;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>detours.lib;syelog.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>call "$(SolutionDir)\bin\moveTranslationFile.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
