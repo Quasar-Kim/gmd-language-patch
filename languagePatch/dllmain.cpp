@@ -117,7 +117,7 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
                 if (translatingMultilineStr)
                 {
                     // TODO: iterator과 labelToRenderStr 포인터 비교
-                    for (int i = 0; i < multilinePartLabels.size(); i++)
+                    for (size_t i = 0; i < multilinePartLabels.size(); i++)
                     {
                         if (i == labelToRenderstrIndex)
                             continue;
@@ -164,7 +164,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
                      )
 {
-    LONG error;
+    LONG detourError;
     (void)hModule;
     (void)lpReserved;
 
@@ -184,38 +184,37 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             translationFileStream >> translation;
 
             HINSTANCE cocosLib = LoadLibraryA(COCOS_LIB_DEFAULT_PATH);
-            if (cocosLib != NULL)
+            if (cocosLib)
             {
                 // cocos2dx에서 필요한 함수들 불러오기
-                // TODO: reintrpret_cast 사용
-                CCLabelBMFont_setString = (CCLabelBMFont_setString_fn)GetProcAddress(cocosLib, "?setString@CCLabelBMFont@cocos2d@@UAEXPBD_N@Z");
-                CCLabelBMFont_setAlignment = (CCLabelBMFont_setAlignment_fn)GetProcAddress(cocosLib, "?setAlignment@CCLabelBMFont@cocos2d@@UAEXW4CCTextAlignment@2@@Z");
-                CCString_initWithFormatAndValist = (CCString_initWithFormatAndValist_fn)GetProcAddress(cocosLib, "?initWithFormatAndValist@CCString@cocos2d@@AAE_NPBDPAD@Z");
-                CCNodeRGBA_getColor = (CCNodeRGBA_getColor_fn)GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ");
-                CCNode_getChildByTag = (CCNode_getChildByTag_fn)GetProcAddress(cocosLib, "?getChildByTag@CCNode@cocos2d@@UAEPAV12@H@Z");
-                CCLabelBMFont_setAnchorPoint = (CCLabelBMFont_setAnchorPoint_fn)GetProcAddress(cocosLib, "?setAnchorPoint@CCLabelBMFont@cocos2d@@UAEXABVCCPoint@2@@Z");
-                CCNode_getAnchorPoint = (CCNode_getAnchorPoint_fn)GetProcAddress(cocosLib, "?getAnchorPoint@CCNode@cocos2d@@UAEABVCCPoint@2@XZ");
-                CCPoint_setPoint = (CCPoint_setPoint_fn)GetProcAddress(cocosLib, "?setPoint@CCPoint@cocos2d@@QAEXMM@Z");
-                CCSprite_setPosition = (CCSprite_setPosition_fn)GetProcAddress(cocosLib, "?setPosition@CCSprite@cocos2d@@UAEXABVCCPoint@2@@Z");
-                CCNode_getPosition = (CCNode_getPosition_fn)GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEABVCCPoint@2@XZ");
-                CCSprite_ignoreAnchorPointForPosition = (CCSprite_ignoreAnchorPointForPosition_fn)GetProcAddress(cocosLib, "?ignoreAnchorPointForPosition@CCSprite@cocos2d@@UAEX_N@Z");
-                CCNode_getParent = (CCNode_getParent_fn)GetProcAddress(cocosLib, "?getParent@CCNode@cocos2d@@UAEPAV12@XZ");
-                CCNode_setPositionY = (CCNode_setPositionY_fn)GetProcAddress(cocosLib, "?setPositionY@CCNode@cocos2d@@UAEXM@Z");
-                CCNode_getPositionXY = (CCNode_getPositionXY_fn)GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEXPAM0@Z");
-                CCNode_transform = (CCNode_transform_fn)GetProcAddress(cocosLib, "?transform@CCNode@cocos2d@@QAEXXZ");
-                CCDirector_sharedDirector = (CCDirector_sharedDirector_fn)GetProcAddress(cocosLib, "?sharedDirector@CCDirector@cocos2d@@SAPAV12@XZ");
-                CCDirector_getRunningScene = (CCDirector_getRunningScene_fn)GetProcAddress(cocosLib, "?getRunningScene@CCDirector@cocos2d@@QAEPAVCCScene@2@XZ");
-                CCNode_addChild = (CCNode_addChild_fn)GetProcAddress(cocosLib, "?addChild@CCNode@cocos2d@@UAEXPAV12@HH@Z");
-                CCNode_removeFromParentAndCleanup = (CCNode_removeFromParentAndCleanup_fn)GetProcAddress(cocosLib, "?removeFromParentAndCleanup@CCNode@cocos2d@@UAEX_N@Z");
-                CCNode_setZOrder = (CCNode_setZOrder_fn)GetProcAddress(cocosLib, "?setZOrder@CCNode@cocos2d@@UAEXH@Z");
-                CCDirector_getVisibleSize = (CCDirector_getVisibleSize_fn)GetProcAddress(cocosLib, "?getVisibleSize@CCDirector@cocos2d@@QAE?AVCCSize@2@XZ");
-                CCNode_getContentSize = (CCNode_getContentSize_fn)GetProcAddress(cocosLib, "?getContentSize@CCNode@cocos2d@@UBEABVCCSize@2@XZ");
-                CCNode_setPositionXY = (CCNode_setPositionXY_fn)GetProcAddress(cocosLib, "?setPosition@CCNode@cocos2d@@UAEXMM@Z");
-                CCSprite_addChild = (CCSprite_addChild_fn)GetProcAddress(cocosLib, "?addChild@CCSprite@cocos2d@@UAEXPAVCCNode@2@HH@Z");
-                CCNode_convertToNodeSpace = (CCNode_convertToNodeSpace_fn)GetProcAddress(cocosLib, "?convertToNodeSpace@CCNode@cocos2d@@QAE?AVCCPoint@2@ABV32@@Z");
-                CCLabelBMFont_limitLabelWidth = (CCLabelBMFont_limitLabelWidth_fn)GetProcAddress(cocosLib, "?limitLabelWidth@CCLabelBMFont@cocos2d@@QAEXMMM@Z");
-                CCSpriteBatchNode_addChild = (CCSpriteBatchNode_addChild_fn)GetProcAddress(cocosLib, "?addChild@CCSpriteBatchNode@cocos2d@@UAEXPAVCCNode@2@@Z");
-                CCNode_convertToWorldSpace = (CCNode_convertToWorldSpace_fn)GetProcAddress(cocosLib, "?convertToWorldSpace@CCNode@cocos2d@@QAE?AVCCPoint@2@ABV32@@Z");
+                CCLabelBMFont_setString = reinterpret_cast<CCLabelBMFont_setString_fn>(GetProcAddress(cocosLib, "?setString@CCLabelBMFont@cocos2d@@UAEXPBD_N@Z"));
+                CCLabelBMFont_setAlignment = reinterpret_cast<CCLabelBMFont_setAlignment_fn>(GetProcAddress(cocosLib, "?setAlignment@CCLabelBMFont@cocos2d@@UAEXW4CCTextAlignment@2@@Z"));
+                CCString_initWithFormatAndValist = reinterpret_cast<CCString_initWithFormatAndValist_fn>(GetProcAddress(cocosLib, "?initWithFormatAndValist@CCString@cocos2d@@AAE_NPBDPAD@Z"));
+                CCNodeRGBA_getColor = reinterpret_cast<CCNodeRGBA_getColor_fn>(GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ"));
+                CCNode_getChildByTag = reinterpret_cast<CCNode_getChildByTag_fn>(GetProcAddress(cocosLib, "?getChildByTag@CCNode@cocos2d@@UAEPAV12@H@Z"));
+                CCLabelBMFont_setAnchorPoint = reinterpret_cast<CCLabelBMFont_setAnchorPoint_fn>(GetProcAddress(cocosLib, "?setAnchorPoint@CCLabelBMFont@cocos2d@@UAEXABVCCPoint@2@@Z"));
+                CCNode_getAnchorPoint = reinterpret_cast<CCNode_getAnchorPoint_fn>(GetProcAddress(cocosLib, "?getAnchorPoint@CCNode@cocos2d@@UAEABVCCPoint@2@XZ"));
+                CCPoint_setPoint = reinterpret_cast<CCPoint_setPoint_fn>(GetProcAddress(cocosLib, "?setPoint@CCPoint@cocos2d@@QAEXMM@Z"));
+                CCSprite_setPosition = reinterpret_cast<CCSprite_setPosition_fn>(GetProcAddress(cocosLib, "?setPosition@CCSprite@cocos2d@@UAEXABVCCPoint@2@@Z"));
+                CCNode_getPosition = reinterpret_cast<CCNode_getPosition_fn>(GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEABVCCPoint@2@XZ"));
+                CCSprite_ignoreAnchorPointForPosition = reinterpret_cast<CCSprite_ignoreAnchorPointForPosition_fn>(GetProcAddress(cocosLib, "?ignoreAnchorPointForPosition@CCSprite@cocos2d@@UAEX_N@Z"));
+                CCNode_getParent = reinterpret_cast<CCNode_getParent_fn>(GetProcAddress(cocosLib, "?getParent@CCNode@cocos2d@@UAEPAV12@XZ"));
+                CCNode_setPositionY = reinterpret_cast<CCNode_setPositionY_fn>(GetProcAddress(cocosLib, "?setPositionY@CCNode@cocos2d@@UAEXM@Z"));
+                CCNode_getPositionXY = reinterpret_cast<CCNode_getPositionXY_fn>(GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEXPAM0@Z"));
+                CCNode_transform = reinterpret_cast<CCNode_transform_fn>(GetProcAddress(cocosLib, "?transform@CCNode@cocos2d@@QAEXXZ"));
+                CCDirector_sharedDirector = reinterpret_cast<CCDirector_sharedDirector_fn>(GetProcAddress(cocosLib, "?sharedDirector@CCDirector@cocos2d@@SAPAV12@XZ"));
+                CCDirector_getRunningScene = reinterpret_cast<CCDirector_getRunningScene_fn>(GetProcAddress(cocosLib, "?getRunningScene@CCDirector@cocos2d@@QAEPAVCCScene@2@XZ"));
+                CCNode_addChild = reinterpret_cast<CCNode_addChild_fn>(GetProcAddress(cocosLib, "?addChild@CCNode@cocos2d@@UAEXPAV12@HH@Z"));
+                CCNode_removeFromParentAndCleanup = reinterpret_cast<CCNode_removeFromParentAndCleanup_fn>(GetProcAddress(cocosLib, "?removeFromParentAndCleanup@CCNode@cocos2d@@UAEX_N@Z"));
+                CCNode_setZOrder = reinterpret_cast<CCNode_setZOrder_fn>(GetProcAddress(cocosLib, "?setZOrder@CCNode@cocos2d@@UAEXH@Z"));
+                CCDirector_getVisibleSize = reinterpret_cast<CCDirector_getVisibleSize_fn>(GetProcAddress(cocosLib, "?getVisibleSize@CCDirector@cocos2d@@QAE?AVCCSize@2@XZ"));
+                CCNode_getContentSize = reinterpret_cast<CCNode_getContentSize_fn>(GetProcAddress(cocosLib, "?getContentSize@CCNode@cocos2d@@UBEABVCCSize@2@XZ"));
+                CCNode_setPositionXY = reinterpret_cast<CCNode_setPositionXY_fn>(GetProcAddress(cocosLib, "?setPosition@CCNode@cocos2d@@UAEXMM@Z"));
+                CCSprite_addChild = reinterpret_cast<CCSprite_addChild_fn>(GetProcAddress(cocosLib, "?addChild@CCSprite@cocos2d@@UAEXPAVCCNode@2@HH@Z"));
+                CCNode_convertToNodeSpace = reinterpret_cast<CCNode_convertToNodeSpace_fn>(GetProcAddress(cocosLib, "?convertToNodeSpace@CCNode@cocos2d@@QAE?AVCCPoint@2@ABV32@@Z"));
+                CCLabelBMFont_limitLabelWidth = reinterpret_cast<CCLabelBMFont_limitLabelWidth_fn>(GetProcAddress(cocosLib, "?limitLabelWidth@CCLabelBMFont@cocos2d@@QAEXMMM@Z"));
+                CCSpriteBatchNode_addChild = reinterpret_cast<CCSpriteBatchNode_addChild_fn>(GetProcAddress(cocosLib, "?addChild@CCSpriteBatchNode@cocos2d@@UAEXPAVCCNode@2@@Z"));
+                CCNode_convertToWorldSpace = reinterpret_cast<CCNode_convertToWorldSpace_fn>(GetProcAddress(cocosLib, "?convertToWorldSpace@CCNode@cocos2d@@QAE?AVCCPoint@2@ABV32@@Z"));
 
                 // CCLabelBMFont::setString과 CCString::initWithFormatAndValist에 훅을 걸어 해당 함수들이 게임에서 호출될 시 
                 // 이 dll의 함수들이 대신 호출되게 합니다
@@ -223,18 +222,17 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                 DetourUpdateThread(GetCurrentThread());
                 DetourAttach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
                 DetourAttach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
-                // DetourAttach(&(PVOID&)CCSpriteBatchNode_addChild, CCSpriteBatchNode_addChild_hookFn);
-                error = DetourTransactionCommit();
+                detourError = DetourTransactionCommit();
 
-                if (error != NO_ERROR)
+                if (detourError != NO_ERROR)
                 {
-                    MessageBoxA(0, "detour failed", "Error", NULL);
+                    MessageBoxA(NULL, "Failed to attach detour to functions", "Error", NULL);
                 }
 
             }
             else
             {
-                MessageBoxA(0, "Failed to load libcocos2d.dll", "Error", NULL);
+                MessageBoxA(NULL, "Failed to load libcocos2d.dll", "Error", NULL);
             }
         }
         else
