@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="번역 파일">
+      <UniqueIdentifier>{cb9f888d-ffd8-49e1-8c66-1c2dc5dbc211}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -44,5 +47,18 @@
     <ClCompile Include="findTranslation.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\translation\ko-kr.json">
+      <Filter>번역 파일</Filter>
+    </None>
+    <None Include="..\translation\reference\recorded-text.json">
+      <Filter>번역 파일</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\translation\reference\extradtedText.txt">
+      <Filter>번역 파일</Filter>
+    </Text>
   </ItemGroup>
 </Project>
