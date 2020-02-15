@@ -1,26 +1,21 @@
 ﻿#include "pch.h"
 #include <Windows.h>
+// Standard Library
 #include <iostream>
 #include <fstream>
 #include <locale>
 #include <codecvt>
 #include <iomanip>
 #include <cmath>
+#include <functional>
+// Third Party Library(lib/)
 #include <detours/detours.h>
 #include <nlohmann/json.hpp>
-#include "dllmain.h"
-#include "internalHook.h"
-#include "CCSize.h"
+// 일반 헤더 파일
+#include "CCClass.h"
+#include "CCFunction.h"
 
 #pragma comment(lib, "detours.lib")
-
-CCPoint::CCPoint(void) : x(0), y(0)
-{
-}
-
-CCPoint::CCPoint(float x, float y) : x(x), y(y)
-{
-}
 
 // TODO: 32비트 환경에서는 다른 경로 지원 필요
 constexpr auto COCOS_LIB_DEFAULT_PATH = "C:/Program Files (x86)/Steam/steamapps/common/Geometry Dash/libcocos2d.dll";
@@ -28,36 +23,6 @@ constexpr auto TRANSLATION_NOT_FOUND = "TRANSLATION_NOT_FOUND";
 
 using namespace std;
 using json = nlohmann::json;
-
-// TODO: 안쓰는 함수 정리
-using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* newString, bool needUpdateLabel);
-using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const char* format, va_list ap);
-using CCLabelBMFont_setAlignment_fn = void(__thiscall*)(void* pThis, int alignment);
-using CCNodeRGBA_getColor_fn = const void* (__thiscall*)(void* pThis);
-using CCNode_getChildByTag_fn = void* (__thiscall*)(void* pThis, int tag);
-using CCLabelBMFont_setAnchorPoint_fn = void(__thiscall*)(void* pThis, const CCPoint& anchorPoint);
-using CCNode_getAnchorPoint_fn = void* (__thiscall*)(void* pThis);
-using CCPoint_setPoint_fn = void(__thiscall*)(void* pThis, float x, float y);
-using CCSprite_setPosition_fn = void(__thiscall*)(void* pThis, const CCPoint& position);
-using CCNode_getPosition_fn = const CCPoint& (__thiscall*)(void* pThis);
-using CCSprite_ignoreAnchorPointForPosition_fn = void(__thiscall*)(void* pThis, bool ignore);
-using CCNode_getParent_fn = void* (__thiscall*)(void* pThis);
-using CCNode_setPositionY_fn = void(__thiscall*)(void* pThis, float y);
-using CCNode_getPositionXY_fn = void(__thiscall*)(void* pThis, float* x, float* y);
-using CCNode_transform_fn = void* (__thiscall*)(void* pThis);
-using CCDirector_getRunningScene_fn = void* (__thiscall*)(void* pThis);
-using CCNode_addChild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
-using CCDirector_sharedDirector_fn = void* (*)();
-using CCNode_removeFromParentAndCleanup_fn = void(__thiscall*)(void* pThis, bool cleanup);
-using CCNode_setZOrder_fn = void(__thiscall*)(void* pThis, int zOrder);
-using CCDirector_getVisibleSize_fn = void* (__thiscall*)(void* pThis);
-using CCNode_getContentSize_fn = const CCSize& (__thiscall*)(void* pThis);
-using CCNode_setPositionXY_fn = void (__thiscall*)(void* pThis, float x, float y);
-using CCSprite_addChild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
-using CCNode_convertToNodeSpace_fn = CCPoint(__thiscall*)(void* pThis, void* worldPoint);
-using CCLabelBMFont_limitLabelWidth_fn = void(__thiscall*)(void* pThis, float pa, float pb, float pc);
-using CCSpriteBatchNode_addChild_fn = void(__thiscall*)(void* pThis, void* child);
-using CCNode_convertToWorldSpace_fn = CCPoint(__thiscall*)(void* pThis, const CCPoint& nodePoint);
 
 // cocos2dlib.dll에서 가져올 함수들
 CCLabelBMFont_setString_fn CCLabelBMFont_setString;
@@ -134,7 +99,7 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
             {
                 // 여러 줄 텍스트의 마지막
                 multilinePartLabels.push_back(pThis);
-                labelToRenderstrIndex = std::trunc(multilinePartLabels.size() / 2);
+                labelToRenderstrIndex = static_cast<int>(std::trunc(multilinePartLabels.size() / 2));
                 labelToRenderStr = multilinePartLabels.at(labelToRenderstrIndex);
 
                 fullMultilineStr += hookedStr;
@@ -192,67 +157,6 @@ bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX,
 {
     return CCString_initWithFormatAndValist(pThis, format, ap);
 }
-
-
-void __fastcall CCNode_addChild_hookFn(void* pThis, void* _EDX, void* pChild, int zOrder, int tag)
-{
-    if (labelToBeLocated == pChild)
-    {
-        CCSprite_addChild(pThis, pChild, zOrder, tag);
-        void* sharedDirector = CCDirector_sharedDirector();
-        void* runningScene = CCDirector_getRunningScene(sharedDirector);
-
-        // TODO: getWinSize 대신 이용
-        CCSize sceneSize = CCNode_getContentSize(runningScene);
-        CCPoint centerPos = { sceneSize.width / 2, sceneSize.height / 2 };
-        // void* labelPos = CCNode_getPosition(labelToRenderStr);
-        // CCPoint_setPoint(labelPos, sceneSize.width / 2, sceneSize.height / 2);
-        // CCPoint relativeCenterPos = CCNode_convertToNodeSpace(pThis, centerPos);
-        // CCSprite_setPosition(pChild, relativeCenterPos);
-
-        CCPoint centerAnchorPoint = { 0.5, 0.5 };
-        return CCLabelBMFont_setAnchorPoint(pChild, centerAnchorPoint);
-    }
-    return CCNode_addChild(pThis, pChild, zOrder, tag);
-}
-
-void __fastcall CCLabelBMFont_limitLabelWidth_hookFn(void* pThis, void* _EDX, float pa, float pb, float pc)
-{
-    void* parentNode = CCNode_getParent(pThis);
-    return CCLabelBMFont_limitLabelWidth(pThis, pa, pb, pc);
-}
-
-void __fastcall CCSpriteBatchNode_addChild_hookFn(void* pThis, void* _EDX, void* pChild)
-{
-    if (labelToBeLocated != nullptr)
-    {
-        labelToBeLocated = nullptr;
-        CCSpriteBatchNode_addChild(pThis, pChild);
-        CCPoint childPos = { 0, 0 };
-        void* parentParent = CCNode_getParent(pThis);
-        CCPoint worldPoint = CCNode_convertToWorldSpace(pThis, childPos);
-
-        void* sharedDirector = CCDirector_sharedDirector();
-        void* runningScene = CCDirector_getRunningScene(sharedDirector);
-        CCSize sceneSize = CCNode_getContentSize(runningScene);
-
-        // worldSpace에서 중간 좌표를 nodeSpace로 계산
-        // CCPoint childPos = { 0, 0 };
-        CCSprite_setPosition(pChild, childPos);
-
-        // CCPoint parentPos = CCNode_getPosition(pThis);
-        // void* centerPos = CCNode_getPosition(pChild);
-        // CCPoint_setPoint(centerPos, sceneSize.width / 2, sceneSize.height / 2);
-        // void* worldSpace = CCNode_convertToWorldSpace(pChild, centerPos);
-        // CCSprite_setPosition(pChild, relativeCenterPos);
-
-        CCPoint centerAnchorPoint = { 0.5, 0.5 };
-        return CCLabelBMFont_setAnchorPoint(pChild, centerAnchorPoint);
-    }
-    return CCSpriteBatchNode_addChild(pThis, pChild);
-
-}
-
 
 // entry point of dll
 BOOL APIENTRY DllMain( HMODULE hModule,
