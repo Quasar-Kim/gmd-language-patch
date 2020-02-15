@@ -17,9 +17,12 @@
 
 #pragma comment(lib, "detours.lib")
 
-// TODO: 32비트 환경에서는 다른 경로 지원 필요
-constexpr auto COCOS_LIB_DEFAULT_PATH = "C:/Program Files (x86)/Steam/steamapps/common/Geometry Dash/libcocos2d.dll";
-constexpr auto TRANSLATION_NOT_FOUND = "TRANSLATION_NOT_FOUND";
+// NOTE: 작동에 필요한 파일들은 모두 GeometryDash.exe와 같은 폴더에 있어야 합니다
+// ko-kr.json은 빌드 이벤트 스크립트에 의해 Debug 빌드될경우 64비트 컴퓨터에선 자동으로 이동됩니다
+// TODO: 빌드 스크립트 32비트 자동 지원
+constexpr auto COCOS_LIB_FILENAME = "libcocos2d.dll";
+constexpr auto DEFAULT_TRANSLATION_FILENAME = "ko-kr.json";
+constexpr auto TRANSLATION_NOT_FOUND_STR = "TRANSLATION_NOT_FOUND";
 
 using namespace std;
 using json = nlohmann::json;
@@ -59,16 +62,10 @@ json translation;
 void* labelToBeLocated;
 
 /* CCLabelBMFont::setString이 호출될때 대신 불리는 함수입니다
-Note: 두 줄 이상의 텍스트의 경우 GMD는 cocos2dx의 자동 개행 기능을 이용하지 않고 줄마다 서도 다른 CCLabelBMFont를 생성합니다.
-    그렇기 때문에 각각의 줄만을 보고는 무슨 텍스트를 출력 중인지 알 수 없는 경우가 생길 수 있고, 따라서
-    한 줄마다 그에 해당하는 번역을 출력하면 잘못된 번역을 보여줄 가능성이 있습니다.
+ - 색깔 표시는 무시됩니다: "<cr>Quit?</c>" -> "Quit?"
+ - formatting 문자는 무시됩니다: "Total attempts: %i" -> "Total attempts: 1238283"
 
-        Ex) This trigger moves...
-            mode. <-- 이 단어 하나만 보고는 무슨말을 하고 있는 것인지 알 수 없습니다.
-
-    따라서 텍스트의 첫 줄을 보고 번역된 텍스트 전체를 하나의 CCLabelBMFont안에 렌더링 한 후(거의 대부분의 텍스트는 첫 줄만으로 구별할 수 있습니다)
-    이어지는 CCLabelBMFont들은 보이지 않게 설정해야 합니다.
-TODO: 색깔 설정 지원
+TODO: 번역 텍스트 색 설정 지원
 */
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
     // 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
@@ -93,50 +90,42 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
         {
             std::string translatedStr;
             void* labelToRenderStr = pThis;
-            int labelToRenderstrIndex = 0;
 
             if (translatingMultilineStr)
             {
                 // 여러 줄 텍스트의 마지막
                 multilinePartLabels.push_back(pThis);
-                labelToRenderstrIndex = static_cast<int>(std::trunc(multilinePartLabels.size() / 2));
-                labelToRenderStr = multilinePartLabels.at(labelToRenderstrIndex);
+                labelToRenderStr = multilinePartLabels[0];
 
                 fullMultilineStr += hookedStr;
-                translatedStr = translation.value(fullMultilineStr, TRANSLATION_NOT_FOUND);
+                translatedStr = translation.value(fullMultilineStr, TRANSLATION_NOT_FOUND_STR);
                 fullMultilineStr = "";
             }
             else
             {
                 // 한 줄 텍스트
-                translatedStr = translation.value(hookedStr, TRANSLATION_NOT_FOUND);
+                translatedStr = translation.value(hookedStr, TRANSLATION_NOT_FOUND_STR);
             }
 
-            if (translatedStr != std::string(TRANSLATION_NOT_FOUND))
+            if (translatedStr != std::string(TRANSLATION_NOT_FOUND_STR))
             {
                 if (translatingMultilineStr)
                 {
-                    // TODO: iterator과 labelToRenderStr 포인터 비교
-                    for (size_t i = 0; i < multilinePartLabels.size(); i++)
+                    // multilinePartLabels의 첫번째 label은 string을 지우지 않습니다
+                    for (size_t i = 1; i < multilinePartLabels.size(); i++)
                     {
-                        if (i == labelToRenderstrIndex)
-                            continue;
-                        // TODO: 폰트에 없는 문자를 렌더링하는 대신 setVisible() 이용
-                        CCLabelBMFont_setString(multilinePartLabels.at(i), "♬", true);
+                        CCLabelBMFont_setString(multilinePartLabels[i], "", true);
                     }
                     multilinePartLabels.clear();
                 }
                 
                 // 위치 설정
-                // 다음 링크를 참조해주세요:
+                // cocos2dx의 위치 시스템에 대해서는 다음 링크를 참조해주세요:
                 // http://docs.cocos.com/creator/manual/en/content-workflow/transform.html#anchor
                 CCPoint anchorPoint = { 0.5, 1 };
                 CCLabelBMFont_setAnchorPoint(labelToRenderStr, anchorPoint);
                 CCPoint position = { 0, 0 };
                 CCSprite_setPosition(labelToRenderStr, position);
-
-                // 텍스트가 가장 위에 오도록 설정
-                CCNode_setZOrder(labelToRenderStr, INT_MAX);
 
                 // 텍스트 가운데 정렬
                 CCLabelBMFont_setAlignment(labelToRenderStr, 1);
@@ -158,7 +147,7 @@ bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX,
     return CCString_initWithFormatAndValist(pThis, format, ap);
 }
 
-// entry point of dll
+// dll 진입점
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -178,12 +167,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     {
         DetourRestoreAfterWith();
 
-        std::ifstream translationFileStream("./ko-kr.json");
+        std::ifstream translationFileStream(DEFAULT_TRANSLATION_FILENAME);
         if (translationFileStream.is_open())
         {
             translationFileStream >> translation;
 
-            HINSTANCE cocosLib = LoadLibraryA(COCOS_LIB_DEFAULT_PATH);
+            HINSTANCE cocosLib = LoadLibraryA(COCOS_LIB_FILENAME);
             if (cocosLib)
             {
                 // cocos2dx에서 필요한 함수들 불러오기
