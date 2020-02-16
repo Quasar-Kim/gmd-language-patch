@@ -6,10 +6,13 @@ using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* ne
 using CCLabelBMFont_limitLabelWidth_fn = void(__thiscall*)(void* pThis, float pa, float pb, float pc);
 using CCLabelBMFont_setAlignment_fn = void(__thiscall*)(void* pThis, int alignment);
 using CCLabelBMFont_setAnchorPoint_fn = void(__thiscall*)(void* pThis, const CCPoint & anchorPoint);
+using CCLabelBMFont_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
+using CCLabelBMFont_create_fn = void*(*)(const char* str, const char* fntFile);
 
 using CCSprite_setPosition_fn = void(__thiscall*)(void* pThis, const CCPoint & position);
 using CCSprite_ignoreAnchorPointForPosition_fn = void(__thiscall*)(void* pThis, bool ignore);
 using CCSprite_addChild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
+using CCSprite_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
 
 using CCNode_getChildByTag_fn = void* (__thiscall*)(void* pThis, int tag);
 using CCNode_getAnchorPoint_fn = void* (__thiscall*)(void* pThis);
@@ -29,3 +32,8 @@ using CCDirector_getVisibleSize_fn = void* (__thiscall*)(void* pThis);
 using CCDirector_sharedDirector_fn = void* (*)();
 
 using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const char* format, va_list ap);
+
+using CCNodeRGBA_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
+using CCNodeRGBA_getColor_fn = const ccColor3B & (__thiscall*)(void* pThis);
+
+using CCSpriteBatchNode_addchild_fn = void(__thiscall*)(void* pThis, void* child);

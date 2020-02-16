@@ -14,6 +14,7 @@
 // 일반 헤더 파일
 #include "CCType.h"
 #include "CCFunction.h"
+#include "colorMarkup.h"
 
 #pragma comment(lib, "detours.lib")
 
@@ -24,24 +25,19 @@ constexpr auto COCOS_LIB_FILENAME = "libcocos2d.dll";
 constexpr auto DEFAULT_TRANSLATION_FILENAME = "ko-kr.json";
 constexpr auto TRANSLATION_NOT_FOUND_STR = "TRANSLATION_NOT_FOUND";
 
-using namespace std;
 using json = nlohmann::json;
 
 // cocos2dlib.dll에서 가져올 함수들
 CCLabelBMFont_setString_fn CCLabelBMFont_setString;
 CCString_initWithFormatAndValist_fn CCString_initWithFormatAndValist;
 CCLabelBMFont_setAlignment_fn CCLabelBMFont_setAlignment;
-CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
 CCNode_getChildByTag_fn CCNode_getChildByTag;
 CCLabelBMFont_setAnchorPoint_fn CCLabelBMFont_setAnchorPoint;
 CCNode_getAnchorPoint_fn CCNode_getAnchorPoint;
-CCPoint_setPoint_fn CCPoint_setPoint;
 CCSprite_setPosition_fn CCSprite_setPosition;
 CCNode_getPosition_fn CCNode_getPosition;
 CCSprite_ignoreAnchorPointForPosition_fn CCSprite_ignoreAnchorPointForPosition;
 CCNode_getParent_fn CCNode_getParent;
-CCNode_setPositionY_fn CCNode_setPositionY;
-CCNode_getPositionXY_fn CCNode_getPositionXY;
 CCNode_transform_fn CCNode_transform;
 CCDirector_sharedDirector_fn CCDirector_sharedDirector;
 CCDirector_getRunningScene_fn CCDirector_getRunningScene;
@@ -54,10 +50,16 @@ CCNode_setPositionXY_fn CCNode_setPositionXY;
 CCSprite_addChild_fn CCSprite_addChild;
 CCNode_convertToNodeSpace_fn CCNode_convertToNodeSpace;
 CCLabelBMFont_limitLabelWidth_fn CCLabelBMFont_limitLabelWidth;
-CCSpriteBatchNode_addChild_fn CCSpriteBatchNode_addChild;
 CCNode_convertToWorldSpace_fn CCNode_convertToWorldSpace;
+CCSprite_setColor_fn CCSprite_setColor;
+CCLabelBMFont_setColor_fn CCLabelBMfont_setColor;
+CCNodeRGBA_setColor_fn CCNodeRGBA_setColor;
+CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
+CCLabelBMFont_create_fn CCLabelBMFont_create;
+CCSpriteBatchNode_addchild_fn CCSpriteBatchNode_addChild;
 
 json translation;
+void* lastTranslatedLabel;
 
 /* CCLabelBMFont::setString이 호출될때 대신 불리는 함수입니다
  - 색깔 표시는 무시됩니다: "<cr>Quit?</c>" -> "Quit?"
@@ -65,12 +67,13 @@ json translation;
 
 TODO: 번역 텍스트 색 설정 지원
 */
+void* tempBackup;
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
     // 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
     static bool translatingMultilineStr = false;
     std::string hookedStr = labelStr;
 
-    static vector<void*> multilinePartLabels;
+    static std::vector<void*> multilinePartLabels;
     static std::string fullMultilineStr = "";
 
     // 공백 문자나 | 문자 등이 걸리는걸 방지합니다
@@ -116,8 +119,9 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
                     }
                     multilinePartLabels.clear();
                 }
-
-                CCLabelBMFont_setString(labelToRenderStr, translatedStr.c_str(), needUpdateLabel);
+                // labelToRenderStr = CCLabelBMFont_create
+                translatingMultilineStr = false;
+                lastTranslatedLabel = labelToRenderStr;
                 
                 // 위치 설정
                 // cocos2dx의 위치 시스템에 대해서는 다음 링크를 참조해주세요:
@@ -130,7 +134,22 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
                 // 텍스트 가운데 정렬
                 CCLabelBMFont_setAlignment(labelToRenderStr, 1);
 
-                translatingMultilineStr = false;
+
+
+
+                // 글자 sprite들을 생성하기 위해서 미리 setString을 부릅니다
+                CCLabelBMFont_setString(labelToRenderStr, translatedStr.c_str(), needUpdateLabel);
+                // 만약 위함수 호출로 훅이 안걸리면 직접 initWith... 호출 필요
+                // updateDisplayedcolor
+                // 1. 이다음 setVisible hook
+                // 2. createchar 호출 -> initWithTexture 후킹?
+
+                // test only
+                tempBackup = CCNode_getChildByTag(labelToRenderStr, 0);
+                // ccColor3B labelColor = CCNodeRGBA_getColor(labelToRenderStr);
+                // ccColor3B charColor = CCNodeRGBA_getColor(spritechar);
+                // CCNodeRGBA_setColor(spritechar, labelRed);
+                // tempBackup = spritechar;
                 return;
             }
             translatingMultilineStr = false;
@@ -138,6 +157,11 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
         }
     }
     return CCLabelBMFont_setString(pThis, labelStr, needUpdateLabel);
+}
+
+void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const ccColor3B& color)
+{
+    return CCSprite_setColor(pThis, color);
 }
 
 
@@ -181,17 +205,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                 CCLabelBMFont_setString = reinterpret_cast<CCLabelBMFont_setString_fn>(GetProcAddress(cocosLib, "?setString@CCLabelBMFont@cocos2d@@UAEXPBD_N@Z"));
                 CCLabelBMFont_setAlignment = reinterpret_cast<CCLabelBMFont_setAlignment_fn>(GetProcAddress(cocosLib, "?setAlignment@CCLabelBMFont@cocos2d@@UAEXW4CCTextAlignment@2@@Z"));
                 CCString_initWithFormatAndValist = reinterpret_cast<CCString_initWithFormatAndValist_fn>(GetProcAddress(cocosLib, "?initWithFormatAndValist@CCString@cocos2d@@AAE_NPBDPAD@Z"));
-                CCNodeRGBA_getColor = reinterpret_cast<CCNodeRGBA_getColor_fn>(GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ"));
                 CCNode_getChildByTag = reinterpret_cast<CCNode_getChildByTag_fn>(GetProcAddress(cocosLib, "?getChildByTag@CCNode@cocos2d@@UAEPAV12@H@Z"));
                 CCLabelBMFont_setAnchorPoint = reinterpret_cast<CCLabelBMFont_setAnchorPoint_fn>(GetProcAddress(cocosLib, "?setAnchorPoint@CCLabelBMFont@cocos2d@@UAEXABVCCPoint@2@@Z"));
                 CCNode_getAnchorPoint = reinterpret_cast<CCNode_getAnchorPoint_fn>(GetProcAddress(cocosLib, "?getAnchorPoint@CCNode@cocos2d@@UAEABVCCPoint@2@XZ"));
-                CCPoint_setPoint = reinterpret_cast<CCPoint_setPoint_fn>(GetProcAddress(cocosLib, "?setPoint@CCPoint@cocos2d@@QAEXMM@Z"));
                 CCSprite_setPosition = reinterpret_cast<CCSprite_setPosition_fn>(GetProcAddress(cocosLib, "?setPosition@CCSprite@cocos2d@@UAEXABVCCPoint@2@@Z"));
                 CCNode_getPosition = reinterpret_cast<CCNode_getPosition_fn>(GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEABVCCPoint@2@XZ"));
                 CCSprite_ignoreAnchorPointForPosition = reinterpret_cast<CCSprite_ignoreAnchorPointForPosition_fn>(GetProcAddress(cocosLib, "?ignoreAnchorPointForPosition@CCSprite@cocos2d@@UAEX_N@Z"));
                 CCNode_getParent = reinterpret_cast<CCNode_getParent_fn>(GetProcAddress(cocosLib, "?getParent@CCNode@cocos2d@@UAEPAV12@XZ"));
-                CCNode_setPositionY = reinterpret_cast<CCNode_setPositionY_fn>(GetProcAddress(cocosLib, "?setPositionY@CCNode@cocos2d@@UAEXM@Z"));
-                CCNode_getPositionXY = reinterpret_cast<CCNode_getPositionXY_fn>(GetProcAddress(cocosLib, "?getPosition@CCNode@cocos2d@@UAEXPAM0@Z"));
                 CCNode_transform = reinterpret_cast<CCNode_transform_fn>(GetProcAddress(cocosLib, "?transform@CCNode@cocos2d@@QAEXXZ"));
                 CCDirector_sharedDirector = reinterpret_cast<CCDirector_sharedDirector_fn>(GetProcAddress(cocosLib, "?sharedDirector@CCDirector@cocos2d@@SAPAV12@XZ"));
                 CCDirector_getRunningScene = reinterpret_cast<CCDirector_getRunningScene_fn>(GetProcAddress(cocosLib, "?getRunningScene@CCDirector@cocos2d@@QAEPAVCCScene@2@XZ"));
@@ -204,8 +224,12 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                 CCSprite_addChild = reinterpret_cast<CCSprite_addChild_fn>(GetProcAddress(cocosLib, "?addChild@CCSprite@cocos2d@@UAEXPAVCCNode@2@HH@Z"));
                 CCNode_convertToNodeSpace = reinterpret_cast<CCNode_convertToNodeSpace_fn>(GetProcAddress(cocosLib, "?convertToNodeSpace@CCNode@cocos2d@@QAE?AVCCPoint@2@ABV32@@Z"));
                 CCLabelBMFont_limitLabelWidth = reinterpret_cast<CCLabelBMFont_limitLabelWidth_fn>(GetProcAddress(cocosLib, "?limitLabelWidth@CCLabelBMFont@cocos2d@@QAEXMMM@Z"));
-                CCSpriteBatchNode_addChild = reinterpret_cast<CCSpriteBatchNode_addChild_fn>(GetProcAddress(cocosLib, "?addChild@CCSpriteBatchNode@cocos2d@@UAEXPAVCCNode@2@@Z"));
                 CCNode_convertToWorldSpace = reinterpret_cast<CCNode_convertToWorldSpace_fn>(GetProcAddress(cocosLib, "?convertToWorldSpace@CCNode@cocos2d@@QAE?AVCCPoint@2@ABV32@@Z"));
+                CCSprite_setColor = reinterpret_cast<CCSprite_setColor_fn>(GetProcAddress(cocosLib, "?setColor@CCSprite@cocos2d@@UAEXABU_ccColor3B@2@@Z"));
+                CCLabelBMfont_setColor = reinterpret_cast<CCLabelBMFont_setColor_fn>(GetProcAddress(cocosLib, "?setColor@CCLabelBMFont@cocos2d@@UAEXABU_ccColor3B@2@@Z"));
+                CCNodeRGBA_setColor = reinterpret_cast<CCNodeRGBA_setColor_fn>(GetProcAddress(cocosLib, "?setColor@CCNodeRGBA@cocos2d@@UAEXABU_ccColor3B@2@@Z"));
+                CCNodeRGBA_getColor = reinterpret_cast<CCNodeRGBA_getColor_fn>(GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ"));
+                CCLabelBMFont_create = reinterpret_cast<CCLabelBMFont_create_fn>(GetProcAddress(cocosLib, "?create@CCLabelBMFont@cocos2d@@SAPAV12@PBD0@Z"));
 
                 // CCLabelBMFont::setString과 CCString::initWithFormatAndValist에 훅을 걸어 해당 함수들이 게임에서 호출될 시 
                 // 이 dll의 함수들이 대신 호출되게 합니다
@@ -213,6 +237,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                 DetourUpdateThread(GetCurrentThread());
                 DetourAttach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
                 DetourAttach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
+                DetourAttach(&(PVOID&)CCSprite_setColor, CCSprite_setColor_hookFn);
                 detourError = DetourTransactionCommit();
 
                 if (detourError != NO_ERROR)

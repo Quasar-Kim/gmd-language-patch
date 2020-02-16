@@ -30,6 +30,9 @@
     <ClInclude Include="CCType.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="colorMarkup.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -39,6 +42,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="CCType.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="colorMarkup.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
