@@ -1,6 +1,6 @@
 #include <Windows.h>
 
-#include "CCClass.h"
+#include "CCType.h"
 
 using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* newString, bool needUpdateLabel);
 using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const char* format, va_list ap);

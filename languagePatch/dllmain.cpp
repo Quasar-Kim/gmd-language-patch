@@ -12,7 +12,7 @@
 #include <detours/detours.h>
 #include <nlohmann/json.hpp>
 // 일반 헤더 파일
-#include "CCClass.h"
+#include "CCType.h"
 #include "CCFunction.h"
 
 #pragma comment(lib, "detours.lib")
@@ -58,8 +58,6 @@ CCSpriteBatchNode_addChild_fn CCSpriteBatchNode_addChild;
 CCNode_convertToWorldSpace_fn CCNode_convertToWorldSpace;
 
 json translation;
-
-void* labelToBeLocated;
 
 /* CCLabelBMFont::setString이 호출될때 대신 불리는 함수입니다
  - 색깔 표시는 무시됩니다: "<cr>Quit?</c>" -> "Quit?"
@@ -118,6 +116,8 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
                     }
                     multilinePartLabels.clear();
                 }
+
+                CCLabelBMFont_setString(labelToRenderStr, translatedStr.c_str(), needUpdateLabel);
                 
                 // 위치 설정
                 // cocos2dx의 위치 시스템에 대해서는 다음 링크를 참조해주세요:
@@ -131,8 +131,7 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
                 CCLabelBMFont_setAlignment(labelToRenderStr, 1);
 
                 translatingMultilineStr = false;
-                labelToBeLocated = labelToRenderStr;
-                return CCLabelBMFont_setString(labelToRenderStr, translatedStr.c_str(), needUpdateLabel);
+                return;
             }
             translatingMultilineStr = false;
             multilinePartLabels.clear();
@@ -140,6 +139,8 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
     }
     return CCLabelBMFont_setString(pThis, labelStr, needUpdateLabel);
 }
+
+
 
 // CCString::initWithFormatAndValist가 호출될때 대신 불리는 함수입니다
 bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
@@ -172,6 +173,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
         {
             translationFileStream >> translation;
 
+            // TODO: DLLMain에서는 LoadLibrary 호출시 에러 가능성 - 따로 init function 만들기
             HINSTANCE cocosLib = LoadLibraryA(COCOS_LIB_FILENAME);
             if (cocosLib)
             {
