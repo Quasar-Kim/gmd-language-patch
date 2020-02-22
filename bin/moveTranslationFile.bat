@@ -1,1 +1,0 @@
-copy "..\translation\ko-kr.json" "C:\Program Files (x86)\steam\steamapps\common\Geometry Dash"
