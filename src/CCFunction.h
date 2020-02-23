@@ -7,8 +7,14 @@
 #include "CCStruct.h"
 
 // cocos2dlib.dll에서 불러올 함수들
-// 
+/* NOTE: 새로운 함수를 불러올 시
+    - 함수 포인터 선언 추가(CCFunction.h)
+    - extern 함수 전역 변수 추가(CCFunction.h)
+    - 함수 전역 변수 초기화(CCFunction.cpp)
+    - 함수 불러오기(CCFunction.cpp loadCCFn)
+*/
 
+// 함수 포인터 선언 ------------------------------------------------------
 using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* newString, bool needUpdateLabel);
 using CCLabelBMFont_limitLabelWidth_fn = void(__thiscall*)(void* pThis, float pa, float pb, float pc);
 using CCLabelBMFont_setAlignment_fn = void(__thiscall*)(void* pThis, int alignment);
@@ -49,6 +55,8 @@ using CCSpriteBatchNode_addchild_fn = void(__thiscall*)(void* pThis, void* child
 
 using CCPoint_setPoint_fn = void(__thiscall*)(void* pThis, float x, float y);
 
+// 함수 전역 변수 ----------------------------------------------------
+// loadCCFn에 의해서 적절한 함수로 설정됩니다
 extern CCLabelBMFont_setString_fn CCLabelBMFont_setString;
 extern CCLabelBMFont_setAlignment_fn CCLabelBMFont_setAlignment;
 extern CCLabelBMFont_setAnchorPoint_fn CCLabelBMFont_setAnchorPoint;
@@ -73,5 +81,6 @@ extern CCDirector_getVisibleSize_fn CCDirector_getVisibleSize;
 extern CCNodeRGBA_setColor_fn CCNodeRGBA_setColor;
 extern CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
 
+// ------------------------------------------------------
 constexpr auto COCOS_LIB_FILENAME = "libcocos2d.dll";
 void loadCCFn();
