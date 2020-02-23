@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CCType.h"
+#include "CCStruct.h"
 
 typedef struct charColorInfo
 {

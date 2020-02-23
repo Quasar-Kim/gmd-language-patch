@@ -1,7 +1,8 @@
 #include "pch.h"
 
-#include "CCType.h"
+#include "CCClass.h"
 
+// CCPoint
 CCPoint::CCPoint(void) : x(0), y(0)
 {
 }

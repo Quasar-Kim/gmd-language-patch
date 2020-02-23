@@ -4,7 +4,7 @@
 #include <string>
 #include <stdexcept>
 
-#include "CCType.h"
+#include "CCClass.h"
 #include "colorMarkup.h"
 
 // y l 

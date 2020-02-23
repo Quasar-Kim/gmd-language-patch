@@ -19,19 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\CCType.cpp" />
+    <ClCompile Include="src\CCClass.cpp" />
     <ClCompile Include="src\colorMarkup.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\CCConst.h" />
     <ClInclude Include="src\CCFunction.h" />
-    <ClInclude Include="src\CCType.h" />
+    <ClInclude Include="src\CCClass.h" />
+    <ClInclude Include="src\CCStruct.h" />
     <ClInclude Include="src\charColorInfo.h" />
     <ClInclude Include="src\colorMarkup.h" />
     <ClInclude Include="src\framework.h" />
+    <ClInclude Include="src\main.h" />
     <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -41,6 +45,7 @@
     <None Include=".gitignore" />
     <None Include="asset\translation\ko-kr.json" />
     <None Include="asset\translation\reference\recorded-text.json" />
+    <None Include="languagePatch.ruleset" />
     <None Include="README.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -100,17 +105,21 @@
     <OutDir>$(MSBuildProjectDirectory)\bin\</OutDir>
     <TargetName>$(ProjectName)_debug</TargetName>
     <IntDir>$(MSBuildProjectDirectory)\obj\</IntDir>
+    <CodeAnalysisRuleSet>languagePatch.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <CodeAnalysisRuleSet>languagePatch.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(MSBuildProjectDirectory)\bin\</OutDir>
     <IntDir>$(MSBuildProjectDirectory)\obj\</IntDir>
+    <CodeAnalysisRuleSet>languagePatch.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <CodeAnalysisRuleSet>languagePatch.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -129,6 +138,7 @@
       <AdditionalLibraryDirectories>$(MSBuildProjectDirectory)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>detours.lib;syelog.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent />
     <PostBuildEvent>
       <Command>call "$(MSBuildProjectDirectory)\script\moveTranslationFile.bat"</Command>
     </PostBuildEvent>
@@ -166,6 +176,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PostBuildEvent>
+      <Command>call "$(MSBuildProjectDirectory)\script\moveTranslationFile.bat"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
