@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <Windows.h>
@@ -5,7 +6,7 @@
 
 #include "CCStruct.h"
 
-constexpr auto COCOS_LIB_FILENAME = "libcocos2d.dll";
+// constexpr auto COCOS_LIB_FILENAME = "libcocos2d.dll";
 constexpr auto DEFAULT_TRANSLATION_FILENAME = "ko-kr.json";
 constexpr auto TRANSLATION_NOT_FOUND_STR = "TRANSLATION_NOT_FOUND";
 
@@ -14,7 +15,6 @@ using json = nlohmann::json;
 DWORD WINAPI main(LPVOID lpParam);
 void attachDetours();
 void detachDetours();
-void loadCCFn();
 json loadTranslationFile(std::string translationFileName);
 
 /* CCLabelBMFont::setString이 호출될때 대신 불리는 함수입니다

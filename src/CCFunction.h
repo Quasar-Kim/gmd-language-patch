@@ -1,7 +1,13 @@
+#pragma once
 #include <Windows.h>
+
+#include <functional>
 
 #include "CCClass.h"
 #include "CCStruct.h"
+
+// cocos2dlib.dll에서 불러올 함수들
+// 
 
 using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* newString, bool needUpdateLabel);
 using CCLabelBMFont_limitLabelWidth_fn = void(__thiscall*)(void* pThis, float pa, float pb, float pc);
@@ -42,3 +48,30 @@ using CCNodeRGBA_getColor_fn = const ccColor3B & (__thiscall*)(void* pThis);
 using CCSpriteBatchNode_addchild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
 
 using CCPoint_setPoint_fn = void(__thiscall*)(void* pThis, float x, float y);
+
+extern CCLabelBMFont_setString_fn CCLabelBMFont_setString;
+extern CCLabelBMFont_setAlignment_fn CCLabelBMFont_setAlignment;
+extern CCLabelBMFont_setAnchorPoint_fn CCLabelBMFont_setAnchorPoint;
+extern CCLabelBMFont_setColor_fn CCLabelBMfont_setColor;
+
+extern CCString_initWithFormatAndValist_fn CCString_initWithFormatAndValist;
+
+extern CCNode_getChildByTag_fn CCNode_getChildByTag;
+extern CCNode_addChild_fn CCNode_addChild;
+extern CCNode_removeFromParentAndCleanup_fn CCNode_removeFromParentAndCleanup;
+extern CCNode_getContentSize_fn CCNode_getContentSize;
+extern CCNode_setParent_fn CCNode_setParent;
+
+extern CCSprite_setPosition_fn CCSprite_setPosition;
+extern CCSprite_addChild_fn CCSprite_addChild;
+extern CCSprite_setColor_fn CCSprite_setColor;
+
+extern CCDirector_sharedDirector_fn CCDirector_sharedDirector;
+extern CCDirector_getRunningScene_fn CCDirector_getRunningScene;
+extern CCDirector_getVisibleSize_fn CCDirector_getVisibleSize;
+
+extern CCNodeRGBA_setColor_fn CCNodeRGBA_setColor;
+extern CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
+
+constexpr auto COCOS_LIB_FILENAME = "libcocos2d.dll";
+void loadCCFn();

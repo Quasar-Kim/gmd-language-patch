@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CCClass.cpp" />
+    <ClCompile Include="src\CCFunction.cpp" />
     <ClCompile Include="src\colorMarkup.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
     <ClCompile Include="src\main.cpp" />
