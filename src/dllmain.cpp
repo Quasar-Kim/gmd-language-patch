@@ -53,8 +53,10 @@ CCSprite_setColor_fn CCSprite_setColor;
 CCLabelBMFont_setColor_fn CCLabelBMfont_setColor;
 CCNodeRGBA_setColor_fn CCNodeRGBA_setColor;
 CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
-CCLabelBMFont_create_fn CCLabelBMFont_create;
 CCSpriteBatchNode_addchild_fn CCSpriteBatchNode_addChild;
+CCNode_setParent_fn CCNode_setParent;
+CCDirector_getWinSize_fn CCDirector_getWinSize;
+CCPoint_setPoint_fn CCPoint_setPoint;
 
 json translation;
 void* lastTranslatedLabel;
@@ -110,45 +112,23 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
             {
                 if (translatingMultilineStr)
                 {
-                    // multilinePartLabels의 첫번째 label은 string을 지우지 않습니다
-                    for (size_t i = 1; i < multilinePartLabels.size(); i++)
+                    for (size_t i = 0; i < multilinePartLabels.size(); i++)
                     {
                         CCLabelBMFont_setString(multilinePartLabels[i], "", true);
                     }
                     multilinePartLabels.clear();
                 }
-                // labelToRenderStr = CCLabelBMFont_create
-                translatingMultilineStr = false;
+                labelToRenderStr = pThis;
                 lastTranslatedLabel = labelToRenderStr;
+                translatingMultilineStr = false;
                 
                 // 위치 설정
                 // cocos2dx의 위치 시스템에 대해서는 다음 링크를 참조해주세요:
                 // http://docs.cocos.com/creator/manual/en/content-workflow/transform.html#anchor
-                CCPoint anchorPoint = { 0.5, 1 };
-                CCLabelBMFont_setAnchorPoint(labelToRenderStr, anchorPoint);
                 CCPoint position = { 0, 0 };
                 CCSprite_setPosition(labelToRenderStr, position);
 
-                // 텍스트 가운데 정렬
-                CCLabelBMFont_setAlignment(labelToRenderStr, 1);
-
-
-
-
-                // 글자 sprite들을 생성하기 위해서 미리 setString을 부릅니다
-                CCLabelBMFont_setString(labelToRenderStr, translatedStr.c_str(), needUpdateLabel);
-                // 만약 위함수 호출로 훅이 안걸리면 직접 initWith... 호출 필요
-                // updateDisplayedcolor
-                // 1. 이다음 setVisible hook
-                // 2. createchar 호출 -> initWithTexture 후킹?
-
-                // test only
-                tempBackup = CCNode_getChildByTag(labelToRenderStr, 0);
-                // ccColor3B labelColor = CCNodeRGBA_getColor(labelToRenderStr);
-                // ccColor3B charColor = CCNodeRGBA_getColor(spritechar);
-                // CCNodeRGBA_setColor(spritechar, labelRed);
-                // tempBackup = spritechar;
-                return;
+                return CCLabelBMFont_setString(pThis, translatedStr.c_str(), true);
             }
             translatingMultilineStr = false;
             multilinePartLabels.clear();
@@ -160,6 +140,53 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const ccColor3B& color)
 {
     return CCSprite_setColor(pThis, color);
+}
+
+void* currentScene;
+void* dialogSprite;
+void* dialogParent;
+void* dialogParentParent;
+void* dialogParentParentParent;
+void* dialogParentParentParentParent;
+void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
+{
+    if (pThis == lastTranslatedLabel)
+    {
+        void* sharedDirector = CCDirector_sharedDirector();
+        currentScene = CCDirector_getRunningScene(sharedDirector);
+        dialogSprite = parent;
+        // CCPoint centerPos = { winSize.width / 2, winSize.height / 2 };
+        // CCPoint centerNodePos = CCNode_convertToNodeSpace(parent, centerPos);
+    }
+    else if (pThis == dialogSprite)
+    {
+        dialogParent = parent;
+    }
+    else if (pThis == dialogParent)
+    {
+        // maybe dialogParent is actually dialog
+        dialogParentParent = parent;
+        CCNode_setParent(pThis, parent);
+
+        const CCSize& winSize = CCNode_getContentSize(currentScene);
+        const CCSize& dialogParentParentSize = CCNode_getContentSize(parent);
+        const CCSize& dialogParentSize = CCNode_getContentSize(dialogParent);
+        const CCSize& dialogSize = CCNode_getContentSize(dialogSprite);
+        
+        // CCNode_setPositionXY(dialogSprite, dialogParentSize.width / 2, dialogParentSize.height / 2);
+        // idea - dialogParent 사이즈 가져온다음에 /2해서 label 위치로 설정
+        // idea 2 - label을 parent에서 제거하고 dialogParent에 붙이기
+        CCNode_removeFromParentAndCleanup(lastTranslatedLabel, false);
+        CCNode_addChild(dialogParent, lastTranslatedLabel, 100, 100);
+
+        CCPoint centerPos = { dialogParentSize.width / 2, dialogParentSize.height / 2 };
+        CCSprite_setPosition(lastTranslatedLabel, centerPos);
+        CCPoint anchorPoint = { 0.5, 0.5 };
+        CCLabelBMFont_setAnchorPoint(lastTranslatedLabel, anchorPoint);
+
+        return;
+    }
+    return CCNode_setParent(pThis, parent);
 }
 
 
@@ -227,7 +254,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                 CCLabelBMfont_setColor = reinterpret_cast<CCLabelBMFont_setColor_fn>(GetProcAddress(cocosLib, "?setColor@CCLabelBMFont@cocos2d@@UAEXABU_ccColor3B@2@@Z"));
                 CCNodeRGBA_setColor = reinterpret_cast<CCNodeRGBA_setColor_fn>(GetProcAddress(cocosLib, "?setColor@CCNodeRGBA@cocos2d@@UAEXABU_ccColor3B@2@@Z"));
                 CCNodeRGBA_getColor = reinterpret_cast<CCNodeRGBA_getColor_fn>(GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ"));
-                CCLabelBMFont_create = reinterpret_cast<CCLabelBMFont_create_fn>(GetProcAddress(cocosLib, "?create@CCLabelBMFont@cocos2d@@SAPAV12@PBD0@Z"));
+                CCSpriteBatchNode_addChild = reinterpret_cast<CCSpriteBatchNode_addchild_fn>(GetProcAddress(cocosLib, "?addChild@CCSpriteBatchNode@cocos2d@@UAEXPAVCCNode@2@HH@Z"));
+                CCNode_setParent = reinterpret_cast<CCNode_setParent_fn>(GetProcAddress(cocosLib, "?setParent@CCNode@cocos2d@@UAEXPAV12@@Z"));
+                CCDirector_getWinSize = reinterpret_cast<CCDirector_getWinSize_fn>(GetProcAddress(cocosLib, "?getWinSize@CCDirector@cocos2d@@QAE?AVCCSize@2@XZ"));
+                CCPoint_setPoint = reinterpret_cast<CCPoint_setPoint_fn>(GetProcAddress(cocosLib, "?setPoint@CCPoint@cocos2d@@QAEXMM@Z"));
 
                 // CCLabelBMFont::setString과 CCString::initWithFormatAndValist에 훅을 걸어 해당 함수들이 게임에서 호출될 시 
                 // 이 dll의 함수들이 대신 호출되게 합니다
@@ -235,7 +265,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                 DetourUpdateThread(GetCurrentThread());
                 DetourAttach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
                 DetourAttach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
-                DetourAttach(&(PVOID&)CCSprite_setColor, CCSprite_setColor_hookFn);
+                DetourAttach(&(PVOID&)CCNode_setParent, CCNode_setParent_hookFn);
                 detourError = DetourTransactionCommit();
 
                 if (detourError != NO_ERROR)
@@ -260,6 +290,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
         DetourUpdateThread(GetCurrentThread());
         DetourDetach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
         DetourDetach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
+        DetourDetach(&(PVOID&)CCNode_setParent, CCNode_setParent_hookFn);
         DetourTransactionCommit();
         break;
     }

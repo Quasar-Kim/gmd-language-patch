@@ -38,8 +38,10 @@
     <Text Include="asset\translation\reference\extradtedText.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitignore" />
     <None Include="asset\translation\ko-kr.json" />
     <None Include="asset\translation\reference\recorded-text.json" />
+    <None Include="README.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

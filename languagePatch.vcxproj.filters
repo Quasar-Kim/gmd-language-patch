@@ -15,6 +15,9 @@
     <Filter Include="에셋\번역 파일">
       <UniqueIdentifier>{cb9f888d-ffd8-49e1-8c66-1c2dc5dbc211}</UniqueIdentifier>
     </Filter>
+    <Filter Include="프로젝트 설정 파일">
+      <UniqueIdentifier>{754206cb-64c4-491e-8df7-5facca250158}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CCType.cpp">
@@ -61,6 +64,12 @@
     </None>
     <None Include="asset\translation\ko-kr.json">
       <Filter>에셋\번역 파일</Filter>
+    </None>
+    <None Include=".gitignore">
+      <Filter>프로젝트 설정 파일</Filter>
+    </None>
+    <None Include="README.md">
+      <Filter>프로젝트 설정 파일</Filter>
     </None>
   </ItemGroup>
 </Project>
