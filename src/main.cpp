@@ -26,13 +26,14 @@ using json = nlohmann::json;
 // 전역 변수
 json translation;
 void* labelToRenderTranslatedStr;
-bool translatingMultilineStr = false;
+bool translatingStr = false;
 
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
 	// 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
 	std::string hookedStr = labelStr;
 	static std::vector<void*> multilinePartLabels;
 	static std::string fullMultilineStr = "";
+	static bool translatingMultilineStr = false;
 
 	// 공백 문자나 | 문자 등이 걸리는걸 방지합니다
 	if (hookedStr.length() > 0)
@@ -47,7 +48,6 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 		else
 		{
 			std::string translatedStr;
-			labelToRenderTranslatedStr = pThis;
 
 			if (translatingMultilineStr)
 			{
@@ -72,6 +72,9 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 					}
 					multilinePartLabels.clear();
 				}
+				translatingMultilineStr = false;
+				translatingStr = true;
+				labelToRenderTranslatedStr = pThis;
 				return CCLabelBMFont_setString(pThis, translatedStr.c_str(), true);
 			}
 			translatingMultilineStr = false;
@@ -81,8 +84,14 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 	return CCLabelBMFont_setString(pThis, labelStr, needUpdateLabel);
 }
 
+ccColor3B myColor;
 void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const ccColor3B& color)
 {
+	if (translatingStr)
+	{
+		myColor = color;
+		return;
+	}
 	return CCSprite_setColor(pThis, color);
 }
 
@@ -90,7 +99,7 @@ void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
 {
 	static void* labelParentNode;
 	static void* dialogSprite;
-	if (translatingMultilineStr)
+	if (translatingStr)
 	{
 		if (pThis == labelToRenderTranslatedStr)
 		{
@@ -102,21 +111,26 @@ void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
 		}
 		else if (pThis == dialogSprite)
 		{
-			// use removeFromParent instead?
+			// TODO: removeFromParent 대신 사용?
 			CCNode_removeFromParentAndCleanup(labelToRenderTranslatedStr, false);
 			CCNode_addChild(dialogSprite, labelToRenderTranslatedStr, 100, 100);
 
+			// label 속성 설정
 			const CCSize& dialogParentSize = CCNode_getContentSize(dialogSprite);
 			CCPoint centerPos = { dialogParentSize.width / 2, dialogParentSize.height / 2 };
 			CCPoint anchorPoint = { 0.5, 0.5 };
-
+			
 			CCSprite_setPosition(labelToRenderTranslatedStr, centerPos);
 			CCLabelBMFont_setAnchorPoint(labelToRenderTranslatedStr, anchorPoint);
 			CCLabelBMFont_setAlignment(labelToRenderTranslatedStr, CC_TEXT_ALIGNMENT_CENTER);
 
-			translatingMultilineStr = false;
+			translatingStr = false;
 			labelParentNode = nullptr;
 			dialogSprite = nullptr;
+
+			// color test
+			void* firstCharSprite = CCNode_getChildByTag(labelToRenderTranslatedStr , 5);
+			CCSprite_setColor(firstCharSprite, myColor);
 		}
 	}
 	return CCNode_setParent(pThis, parent);
@@ -174,6 +188,7 @@ void attachDetours()
 	DetourAttach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
 	DetourAttach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
 	DetourAttach(&(PVOID&)CCNode_setParent, CCNode_setParent_hookFn);
+	DetourAttach(&(PVOID&)CCSprite_setColor, CCSprite_setColor_hookFn);
 	detourError = DetourTransactionCommit();
 
 	if (detourError != NO_ERROR)
@@ -189,6 +204,7 @@ void detachDetours()
 	DetourDetach(&(PVOID&)CCLabelBMFont_setString, CCLabelBMFont_setString_hookFn);
 	DetourDetach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
 	DetourDetach(&(PVOID&)CCNode_setParent, CCNode_setParent_hookFn);
+	DetourDetach(&(PVOID&)CCSprite_setColor, CCSprite_setColor_hookFn);
 	DetourTransactionCommit();
 }
 

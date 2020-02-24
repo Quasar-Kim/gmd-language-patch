@@ -17,6 +17,7 @@ CCNode_addChild_fn CCNode_addChild;
 CCNode_removeFromParentAndCleanup_fn CCNode_removeFromParentAndCleanup;
 CCNode_getContentSize_fn CCNode_getContentSize;
 CCNode_setParent_fn CCNode_setParent;
+CCSprite_setVisible_fn CCSprite_setVisible;
 
 CCSprite_setPosition_fn CCSprite_setPosition;
 CCSprite_addChild_fn CCSprite_addChild;
@@ -55,6 +56,7 @@ void loadCCFn()
 		CCNodeRGBA_setColor = reinterpret_cast<CCNodeRGBA_setColor_fn>(GetProcAddress(cocosLib, "?setColor@CCNodeRGBA@cocos2d@@UAEXABU_ccColor3B@2@@Z"));
 		CCNodeRGBA_getColor = reinterpret_cast<CCNodeRGBA_getColor_fn>(GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ"));
 		CCNode_setParent = reinterpret_cast<CCNode_setParent_fn>(GetProcAddress(cocosLib, "?setParent@CCNode@cocos2d@@UAEXPAV12@@Z"));
+		CCSprite_setVisible = reinterpret_cast<CCSprite_setVisible_fn>(GetProcAddress(cocosLib, "?setVisible@CCSprite@cocos2d@@UAEX_N@Z"));
 	}
 	else
 	{

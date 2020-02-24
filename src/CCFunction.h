@@ -40,6 +40,7 @@ using CCNode_setPositionXY_fn = void(__thiscall*)(void* pThis, float x, float y)
 using CCNode_convertToNodeSpace_fn = CCPoint(__thiscall*)(void* pThis, void* worldPoint);
 using CCNode_convertToWorldSpace_fn = CCPoint(__thiscall*)(void* pThis, const CCPoint & nodePoint);
 using CCNode_setParent_fn = void(__thiscall*)(void* pThis, void* parent);
+using CCSprite_setVisible_fn = void(__thiscall*)(void* pThis, bool visible);
 
 using CCDirector_getRunningScene_fn = void* (__thiscall*)(void* pThis);
 using CCDirector_getVisibleSize_fn = void* (__thiscall*)(void* pThis);
@@ -73,6 +74,7 @@ extern CCNode_setParent_fn CCNode_setParent;
 extern CCSprite_setPosition_fn CCSprite_setPosition;
 extern CCSprite_addChild_fn CCSprite_addChild;
 extern CCSprite_setColor_fn CCSprite_setColor;
+extern CCSprite_setVisible_fn CCSprite_setVisible;
 
 extern CCDirector_sharedDirector_fn CCDirector_sharedDirector;
 extern CCDirector_getRunningScene_fn CCDirector_getRunningScene;
