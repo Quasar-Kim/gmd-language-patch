@@ -26,6 +26,9 @@ using CCSprite_setPosition_fn = void(__thiscall*)(void* pThis, const CCPoint & p
 using CCSprite_ignoreAnchorPointForPosition_fn = void(__thiscall*)(void* pThis, bool ignore);
 using CCSprite_addChild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
 using CCSprite_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
+using CCSprite_setBatchNode_fn = void(__thiscall*)(void* pThis, void* pobSpriteBatchNode);
+using CCSprite_initWithTexture_fn = void(__thiscall*)(void* pThis, void* pTexture, void* rect, bool rotated);
+using CCSprite_setOpacityModifyRGB_fn = void(__thiscall*)(void* pThis, bool modify);
 
 using CCNode_getChildByTag_fn = void* (__thiscall*)(void* pThis, int tag);
 using CCNode_getAnchorPoint_fn = void* (__thiscall*)(void* pThis);
@@ -41,6 +44,12 @@ using CCNode_convertToNodeSpace_fn = CCPoint(__thiscall*)(void* pThis, void* wor
 using CCNode_convertToWorldSpace_fn = CCPoint(__thiscall*)(void* pThis, const CCPoint & nodePoint);
 using CCNode_setParent_fn = void(__thiscall*)(void* pThis, void* parent);
 using CCSprite_setVisible_fn = void(__thiscall*)(void* pThis, bool visible);
+using CCNode_getChildren_fn = void* (__thiscall*)(void* pThis);
+
+using CCObject_getTag_fn = int(__thiscall*)(void* pThis);
+
+using CCArray_randomObject_fn = void* (__thiscall*)(void* pThis);
+using CCArray_indexOf_fn = unsigned int(__thiscall*)(void* pThis, void* object);
 
 using CCDirector_getRunningScene_fn = void* (__thiscall*)(void* pThis);
 using CCDirector_getVisibleSize_fn = void* (__thiscall*)(void* pThis);
@@ -50,7 +59,7 @@ using CCDirector_getWinSize_fn = CCSize (__thiscall*)(void* pThis);
 using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const char* format, va_list ap);
 
 using CCNodeRGBA_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
-using CCNodeRGBA_getColor_fn = const ccColor3B & (__thiscall*)(void* pThis);
+using CCNodeRGBA_getColor_fn = ccColor3B & (__thiscall*)(void* pThis);
 
 using CCSpriteBatchNode_addchild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
 
@@ -70,11 +79,21 @@ extern CCNode_addChild_fn CCNode_addChild;
 extern CCNode_removeFromParentAndCleanup_fn CCNode_removeFromParentAndCleanup;
 extern CCNode_getContentSize_fn CCNode_getContentSize;
 extern CCNode_setParent_fn CCNode_setParent;
+extern CCNode_getChildren_fn CCNode_getChildren;
+extern CCNode_getParent_fn CCNode_getParent;
+
+extern CCObject_getTag_fn CCObject_getTag;
+
+extern CCArray_randomObject_fn CCArray_randomObject;
+extern CCArray_indexOf_fn CCArray_indexOf;
 
 extern CCSprite_setPosition_fn CCSprite_setPosition;
 extern CCSprite_addChild_fn CCSprite_addChild;
 extern CCSprite_setColor_fn CCSprite_setColor;
 extern CCSprite_setVisible_fn CCSprite_setVisible;
+extern CCSprite_setBatchNode_fn CCSprite_setBatchNode;
+extern CCSprite_initWithTexture_fn CCSprite_initWithTexture;
+extern CCSprite_setOpacityModifyRGB_fn CCSprite_setOpacityModifyRGB;
 
 extern CCDirector_sharedDirector_fn CCDirector_sharedDirector;
 extern CCDirector_getRunningScene_fn CCDirector_getRunningScene;

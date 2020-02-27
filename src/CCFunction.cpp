@@ -18,10 +18,20 @@ CCNode_removeFromParentAndCleanup_fn CCNode_removeFromParentAndCleanup;
 CCNode_getContentSize_fn CCNode_getContentSize;
 CCNode_setParent_fn CCNode_setParent;
 CCSprite_setVisible_fn CCSprite_setVisible;
+CCNode_getChildren_fn CCNode_getChildren;
+CCNode_getParent_fn CCNode_getParent;
+
+CCObject_getTag_fn CCObject_getTag;
+
+CCArray_randomObject_fn CCArray_randomObject;
+CCArray_indexOf_fn CCArray_indexOf;
 
 CCSprite_setPosition_fn CCSprite_setPosition;
 CCSprite_addChild_fn CCSprite_addChild;
 CCSprite_setColor_fn CCSprite_setColor;
+CCSprite_setBatchNode_fn CCSprite_setBatchNode;
+CCSprite_initWithTexture_fn CCSprite_initWithTexture;
+CCSprite_setOpacityModifyRGB_fn CCSprite_setOpacityModifyRGB;
 
 CCDirector_sharedDirector_fn CCDirector_sharedDirector;
 CCDirector_getRunningScene_fn CCDirector_getRunningScene;
@@ -57,6 +67,14 @@ void loadCCFn()
 		CCNodeRGBA_getColor = reinterpret_cast<CCNodeRGBA_getColor_fn>(GetProcAddress(cocosLib, "?getColor@CCNodeRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ"));
 		CCNode_setParent = reinterpret_cast<CCNode_setParent_fn>(GetProcAddress(cocosLib, "?setParent@CCNode@cocos2d@@UAEXPAV12@@Z"));
 		CCSprite_setVisible = reinterpret_cast<CCSprite_setVisible_fn>(GetProcAddress(cocosLib, "?setVisible@CCSprite@cocos2d@@UAEX_N@Z"));
+		CCSprite_setBatchNode = reinterpret_cast<CCSprite_setBatchNode_fn>(GetProcAddress(cocosLib, "?setBatchNode@CCSprite@cocos2d@@UAEXPAVCCSpriteBatchNode@2@@Z"));
+		CCNode_getChildren = reinterpret_cast<CCNode_getChildren_fn>(GetProcAddress(cocosLib, "?getChildren@CCNode@cocos2d@@UAEPAVCCArray@2@XZ"));
+		CCArray_randomObject = reinterpret_cast<CCArray_randomObject_fn>(GetProcAddress(cocosLib, "?randomObject@CCArray@cocos2d@@QAEPAVCCObject@2@XZ"));
+		CCNode_getParent = reinterpret_cast<CCNode_getParent_fn>(GetProcAddress(cocosLib, "?getParent@CCNode@cocos2d@@UAEPAV12@XZ"));
+		CCSprite_initWithTexture = reinterpret_cast<CCSprite_initWithTexture_fn>(GetProcAddress(cocosLib, "?initWithTexture@CCSprite@cocos2d@@UAE_NPAVCCTexture2D@2@ABVCCRect@2@_N@Z"));
+		CCSprite_setOpacityModifyRGB = reinterpret_cast<CCSprite_setOpacityModifyRGB_fn>(GetProcAddress(cocosLib, "?setOpacityModifyRGB@CCSprite@cocos2d@@UAEX_N@Z"));
+		CCArray_indexOf = reinterpret_cast<CCArray_indexOf_fn>(GetProcAddress(cocosLib, "?indexOfObject@CCArray@cocos2d@@QBEIPAVCCObject@2@@Z"));
+		CCObject_getTag = reinterpret_cast<CCObject_getTag_fn>(GetProcAddress(cocosLib, "?getTag@CCObject@cocos2d@@UBEHXZ"));
 	}
 	else
 	{

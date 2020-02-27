@@ -27,6 +27,8 @@ using json = nlohmann::json;
 json translation;
 void* labelToRenderTranslatedStr;
 bool translatingStr = false;
+int calledTime = 0;
+std::vector<StrColorInfo> colorInfo;
 
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
 	// 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
@@ -36,7 +38,7 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 	static bool translatingMultilineStr = false;
 
 	// 공백 문자나 | 문자 등이 걸리는걸 방지합니다
-	if (hookedStr.length() > 0)
+	if (hookedStr.length() > 1)
 	{
 		if (std::isspace(hookedStr.back()))
 		{
@@ -75,6 +77,10 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 				translatingMultilineStr = false;
 				translatingStr = true;
 				labelToRenderTranslatedStr = pThis;
+
+				colorInfo = parseColorMarkup(translatedStr);
+				translatedStr = removeColorMarkup(translatedStr);
+
 				return CCLabelBMFont_setString(pThis, translatedStr.c_str(), true);
 			}
 			translatingMultilineStr = false;
@@ -82,17 +88,6 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 		}
 	}
 	return CCLabelBMFont_setString(pThis, labelStr, needUpdateLabel);
-}
-
-ccColor3B myColor;
-void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const ccColor3B& color)
-{
-	if (translatingStr)
-	{
-		myColor = color;
-		return;
-	}
-	return CCSprite_setColor(pThis, color);
 }
 
 void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
@@ -127,18 +122,46 @@ void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
 			translatingStr = false;
 			labelParentNode = nullptr;
 			dialogSprite = nullptr;
-
-			// color test
-			void* firstCharSprite = CCNode_getChildByTag(labelToRenderTranslatedStr , 5);
-			CCSprite_setColor(firstCharSprite, myColor);
+			calledTime = 0;
+			colorInfo.clear();
 		}
 	}
 	return CCNode_setParent(pThis, parent);
 }
 
+void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const ccColor3B& color)
+{
+	if (translatingStr)
+	{
+		return;
+	}
+	return CCSprite_setColor(pThis, color);
+}
+
 bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
 {
 	return CCString_initWithFormatAndValist(pThis, format, ap);
+}
+
+void __fastcall CCSprite_setOpacityModifyRGB_hookFn(void* pThis, void* _EDX, bool modify)
+{
+	if (translatingStr)
+	{
+		if (calledTime % 2 == 0)
+		{
+			int charIndex = calledTime / 2;
+			for (const StrColorInfo& strColorInfo : colorInfo)
+			{
+				if (charIndex <= strColorInfo.endPos && charIndex >= strColorInfo.startPos)
+				{
+					CCSprite_setColor(pThis, strColorInfo.color);
+					break;
+				}
+			}
+		}
+		calledTime++;
+	}
+	return CCSprite_setOpacityModifyRGB(pThis, modify);
 }
 
 #pragma warning(push)
@@ -157,9 +180,9 @@ DWORD WINAPI main(LPVOID lpParam)
 		std::string errReportMsg = "Unexcepted error has occured in languagePatch.dll: ";
 		errReportMsg.append(e.what());
 		MessageBoxA(NULL, errReportMsg.c_str(), "Language Patch Error", MB_ICONERROR);
-		return static_cast<DWORD>(1);
+		return 1;
 	}
-	return static_cast<DWORD>(0);
+	return 0;
 }
 #pragma warning(pop)
 
@@ -189,6 +212,7 @@ void attachDetours()
 	DetourAttach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
 	DetourAttach(&(PVOID&)CCNode_setParent, CCNode_setParent_hookFn);
 	DetourAttach(&(PVOID&)CCSprite_setColor, CCSprite_setColor_hookFn);
+	DetourAttach(&(PVOID&)CCSprite_setOpacityModifyRGB, CCSprite_setOpacityModifyRGB_hookFn);
 	detourError = DetourTransactionCommit();
 
 	if (detourError != NO_ERROR)
@@ -205,6 +229,7 @@ void detachDetours()
 	DetourDetach(&(PVOID&)CCString_initWithFormatAndValist, CCString_initWithFormatAndValist_hookFn);
 	DetourDetach(&(PVOID&)CCNode_setParent, CCNode_setParent_hookFn);
 	DetourDetach(&(PVOID&)CCSprite_setColor, CCSprite_setColor_hookFn);
+	DetourDetach(&(PVOID&)CCSprite_setOpacityModifyRGB, CCSprite_setOpacityModifyRGB_hookFn);
 	DetourTransactionCommit();
 }
 
