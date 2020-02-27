@@ -124,6 +124,8 @@ void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
 			dialogSprite = nullptr;
 			calledTime = 0;
 			colorInfo.clear();
+
+
 		}
 	}
 	return CCNode_setParent(pThis, parent);
@@ -154,6 +156,7 @@ void __fastcall CCSprite_setOpacityModifyRGB_hookFn(void* pThis, void* _EDX, boo
 			{
 				if (charIndex <= strColorInfo.endPos && charIndex >= strColorInfo.startPos)
 				{
+					CCSprite_setOpacityModifyRGB(pThis, false);
 					CCSprite_setColor(pThis, strColorInfo.color);
 					break;
 				}

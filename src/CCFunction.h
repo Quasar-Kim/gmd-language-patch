@@ -21,6 +21,7 @@ using CCLabelBMFont_setAlignment_fn = void(__thiscall*)(void* pThis, int alignme
 using CCLabelBMFont_setAnchorPoint_fn = void(__thiscall*)(void* pThis, const CCPoint & anchorPoint);
 using CCLabelBMFont_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
 using CCLabelBMFont_create_fn = void*(*)(const char* str, const char* fntFile);
+using CCLabelBMFont_setCascadeColorEnabled_fn = void(__thiscall*)(void* pThis, bool cascadeColorEnabled);
 
 using CCSprite_setPosition_fn = void(__thiscall*)(void* pThis, const CCPoint & position);
 using CCSprite_ignoreAnchorPointForPosition_fn = void(__thiscall*)(void* pThis, bool ignore);
@@ -60,6 +61,8 @@ using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const
 
 using CCNodeRGBA_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
 using CCNodeRGBA_getColor_fn = ccColor3B & (__thiscall*)(void* pThis);
+using CCNodeRGBA_getDisplayedColor_fn = const ccColor3B & (__thiscall*)(void* pThis);
+using CCNodeRGBA_getOpacity_fn = unsigned char(__thiscall*)(void* pThis);
 
 using CCSpriteBatchNode_addchild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
 
@@ -101,6 +104,8 @@ extern CCDirector_getVisibleSize_fn CCDirector_getVisibleSize;
 
 extern CCNodeRGBA_setColor_fn CCNodeRGBA_setColor;
 extern CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
+extern CCNodeRGBA_getDisplayedColor_fn CCNodeRGBA_getDisplayedColor;
+extern CCNodeRGBA_getOpacity_fn CCNodeRGBA_getOpacity;
 
 // ------------------------------------------------------
 constexpr auto COCOS_LIB_FILENAME = "libcocos2d.dll";

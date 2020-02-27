@@ -9,6 +9,7 @@ CCLabelBMFont_setString_fn CCLabelBMFont_setString;
 CCLabelBMFont_setAlignment_fn CCLabelBMFont_setAlignment;
 CCLabelBMFont_setAnchorPoint_fn CCLabelBMFont_setAnchorPoint;
 CCLabelBMFont_setColor_fn CCLabelBMfont_setColor;
+CCLabelBMFont_setCascadeColorEnabled_fn CCLabelBMFont_setCascadeColorEnabled;
 
 CCString_initWithFormatAndValist_fn CCString_initWithFormatAndValist;
 
@@ -39,6 +40,8 @@ CCDirector_getVisibleSize_fn CCDirector_getVisibleSize;
 
 CCNodeRGBA_setColor_fn CCNodeRGBA_setColor;
 CCNodeRGBA_getColor_fn CCNodeRGBA_getColor;
+CCNodeRGBA_getDisplayedColor_fn CCNodeRGBA_getDisplayedColor;
+CCNodeRGBA_getOpacity_fn CCNodeRGBA_getOpacity;
 
 
 void loadCCFn()
@@ -75,6 +78,9 @@ void loadCCFn()
 		CCSprite_setOpacityModifyRGB = reinterpret_cast<CCSprite_setOpacityModifyRGB_fn>(GetProcAddress(cocosLib, "?setOpacityModifyRGB@CCSprite@cocos2d@@UAEX_N@Z"));
 		CCArray_indexOf = reinterpret_cast<CCArray_indexOf_fn>(GetProcAddress(cocosLib, "?indexOfObject@CCArray@cocos2d@@QBEIPAVCCObject@2@@Z"));
 		CCObject_getTag = reinterpret_cast<CCObject_getTag_fn>(GetProcAddress(cocosLib, "?getTag@CCObject@cocos2d@@UBEHXZ"));
+		CCNodeRGBA_getDisplayedColor = reinterpret_cast<CCNodeRGBA_getDisplayedColor_fn>(GetProcAddress(cocosLib, "?getDisplayedColor@CCLayerRGBA@cocos2d@@UAEABU_ccColor3B@2@XZ"));
+		CCNodeRGBA_getOpacity = reinterpret_cast<CCNodeRGBA_getOpacity_fn>(GetProcAddress(cocosLib, "?getOpacity@CCNodeRGBA@cocos2d@@UAEEXZ"));
+		CCLabelBMFont_setCascadeColorEnabled = reinterpret_cast<CCLabelBMFont_setCascadeColorEnabled_fn>(GetProcAddress(cocosLib, "?setCascadeColorEnabled@CCLabelBMFont@cocos2d@@UAEX_N@Z"));
 	}
 	else
 	{

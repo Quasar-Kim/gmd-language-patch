@@ -52,7 +52,7 @@ std::vector<StrColorInfo> parseColorMarkup(std::string utf8Str)
 			str.erase(startTagPos, 4);
 			str.erase(endTagPos, 4);
 
-			StrColorInfo colorInfo = { startTagPos, endTagPos - 1 };
+			StrColorInfo colorInfo = { startTagPos, endTagPos - 1, color };
 			result.push_back(colorInfo);
 		}
 		else
