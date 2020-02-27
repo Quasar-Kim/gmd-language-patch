@@ -43,9 +43,6 @@
     <ClInclude Include="src\CCFunction.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="src\charColorInfo.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="src\colorMarkup.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>

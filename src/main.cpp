@@ -27,8 +27,8 @@ using json = nlohmann::json;
 json translation;
 void* labelToRenderTranslatedStr;
 bool translatingStr = false;
-int calledTime = 0;
-std::vector<StrColorInfo> colorInfo;
+int setOpacityModifyRGBCalledTime = 0;
+std::vector<ColorInfo> colorInfo;
 
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
 	// 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
@@ -106,7 +106,6 @@ void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
 		}
 		else if (pThis == dialogSprite)
 		{
-			// TODO: removeFromParent 대신 사용?
 			CCNode_removeFromParentAndCleanup(labelToRenderTranslatedStr, false);
 			CCNode_addChild(dialogSprite, labelToRenderTranslatedStr, 100, 100);
 
@@ -122,16 +121,14 @@ void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
 			translatingStr = false;
 			labelParentNode = nullptr;
 			dialogSprite = nullptr;
-			calledTime = 0;
+			setOpacityModifyRGBCalledTime = 0;
 			colorInfo.clear();
-
-
 		}
 	}
 	return CCNode_setParent(pThis, parent);
 }
 
-void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const ccColor3B& color)
+void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const CCColor3B& color)
 {
 	if (translatingStr)
 	{
@@ -149,10 +146,10 @@ void __fastcall CCSprite_setOpacityModifyRGB_hookFn(void* pThis, void* _EDX, boo
 {
 	if (translatingStr)
 	{
-		if (calledTime % 2 == 0)
+		if (setOpacityModifyRGBCalledTime % 2 == 0)
 		{
-			int charIndex = calledTime / 2;
-			for (const StrColorInfo& strColorInfo : colorInfo)
+			unsigned int charIndex = setOpacityModifyRGBCalledTime / 2;
+			for (const ColorInfo& strColorInfo : colorInfo)
 			{
 				if (charIndex <= strColorInfo.endPos && charIndex >= strColorInfo.startPos)
 				{
@@ -162,7 +159,7 @@ void __fastcall CCSprite_setOpacityModifyRGB_hookFn(void* pThis, void* _EDX, boo
 				}
 			}
 		}
-		calledTime++;
+		setOpacityModifyRGBCalledTime++;
 	}
 	return CCSprite_setOpacityModifyRGB(pThis, modify);
 }

@@ -12,15 +12,22 @@
 #include "CCFunction.h"
 #include "colorMarkup.h"
 
-// TODO: 글자 색 초기화 함수
-// TODO: struct 이름 대문자로
 // TODO: namespace
-std::vector<StrColorInfo> parseColorMarkup(std::string utf8Str)
+// TODO: 적절한 색깔 찾기
+/* NOTE: 색 코드
+	- g: Green
+	- y: Gold(or Yellow)
+	- l: Blue(or lime blue?)
+	- p: Purple
+	- r: Red
+*/
+std::vector<ColorInfo> parseColorMarkup(std::string utf8Str)
 {
-	std::vector<StrColorInfo> result;
+	std::vector<ColorInfo> result;
 
+	// 개행 문자(\n)는 setOpacityModifyRGB를 호출하지 않습니다
 	std::u16string str = utf8To16(utf8Str);
-	// str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+	str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
 
 	unsigned int startTagPos = str.find(u"<c");
 	while (startTagPos != std::string::npos)
@@ -29,7 +36,7 @@ std::vector<StrColorInfo> parseColorMarkup(std::string utf8Str)
 		unsigned int colorTypeDefPos = startTagPos + 2;
 		if (endTagPos != std::string::npos)
 		{
-			ccColor3B color = colorWhite;
+			CCColor3B color = colorWhite;
 			switch (str[colorTypeDefPos])
 			{
 			case 'r':
@@ -44,6 +51,9 @@ std::vector<StrColorInfo> parseColorMarkup(std::string utf8Str)
 			case 'l':
 				color = labelBlue;
 				break;
+			case 'p':
+				color = labelPurple;
+				break;
 			default:
 				throw std::invalid_argument("Failed to parse color markup string: invalid color");
 			}
@@ -52,7 +62,7 @@ std::vector<StrColorInfo> parseColorMarkup(std::string utf8Str)
 			str.erase(startTagPos, 4);
 			str.erase(endTagPos, 4);
 
-			StrColorInfo colorInfo = { startTagPos, endTagPos - 1, color };
+			ColorInfo colorInfo = { startTagPos, endTagPos - 1, color };
 			result.push_back(colorInfo);
 		}
 		else
@@ -81,6 +91,6 @@ std::string utf16To8(std::u16string str)
 
 std::string removeColorMarkup(std::string str)
 {
-	std::regex markup("(<c.?>)|(<\/c>)");
+	std::regex markup("(<c.?>)|(</c>)");
 	return std::regex_replace(str, markup, "");
 }

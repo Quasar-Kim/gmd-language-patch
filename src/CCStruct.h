@@ -2,16 +2,16 @@
 #include <cstdint>
 
 // in Win32, GLubyte is defined as uint8_t
-struct ccColor3B
+struct CCColor3B
 {
     uint8_t r;
     uint8_t g;
     uint8_t b;
 };
 
-static inline ccColor3B
+static inline CCColor3B
 ccc3(const uint8_t r, const uint8_t g, const uint8_t b)
 {
-    ccColor3B c = { r, g, b };
+    CCColor3B c = { r, g, b };
     return c;
 }

@@ -7,6 +7,7 @@
 #include "CCStruct.h"
 
 // cocos2dlib.dll에서 불러올 함수들
+// TODO: boost.dll 사용?
 /* NOTE: 새로운 함수를 불러올 시
     - 함수 포인터 선언 추가(CCFunction.h)
     - extern 함수 전역 변수 추가(CCFunction.h)
@@ -19,14 +20,14 @@ using CCLabelBMFont_setString_fn = void(__thiscall*)(void* pThis, const char* ne
 using CCLabelBMFont_limitLabelWidth_fn = void(__thiscall*)(void* pThis, float pa, float pb, float pc);
 using CCLabelBMFont_setAlignment_fn = void(__thiscall*)(void* pThis, int alignment);
 using CCLabelBMFont_setAnchorPoint_fn = void(__thiscall*)(void* pThis, const CCPoint & anchorPoint);
-using CCLabelBMFont_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
+using CCLabelBMFont_setColor_fn = void(__thiscall*)(void* pThis, const CCColor3B & color);
 using CCLabelBMFont_create_fn = void*(*)(const char* str, const char* fntFile);
 using CCLabelBMFont_setCascadeColorEnabled_fn = void(__thiscall*)(void* pThis, bool cascadeColorEnabled);
 
 using CCSprite_setPosition_fn = void(__thiscall*)(void* pThis, const CCPoint & position);
 using CCSprite_ignoreAnchorPointForPosition_fn = void(__thiscall*)(void* pThis, bool ignore);
 using CCSprite_addChild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
-using CCSprite_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
+using CCSprite_setColor_fn = void(__thiscall*)(void* pThis, const CCColor3B & color);
 using CCSprite_setBatchNode_fn = void(__thiscall*)(void* pThis, void* pobSpriteBatchNode);
 using CCSprite_initWithTexture_fn = void(__thiscall*)(void* pThis, void* pTexture, void* rect, bool rotated);
 using CCSprite_setOpacityModifyRGB_fn = void(__thiscall*)(void* pThis, bool modify);
@@ -59,9 +60,9 @@ using CCDirector_getWinSize_fn = CCSize (__thiscall*)(void* pThis);
 
 using CCString_initWithFormatAndValist_fn = bool(__thiscall*)(void* pThis, const char* format, va_list ap);
 
-using CCNodeRGBA_setColor_fn = void(__thiscall*)(void* pThis, const ccColor3B & color);
-using CCNodeRGBA_getColor_fn = ccColor3B & (__thiscall*)(void* pThis);
-using CCNodeRGBA_getDisplayedColor_fn = const ccColor3B & (__thiscall*)(void* pThis);
+using CCNodeRGBA_setColor_fn = void(__thiscall*)(void* pThis, const CCColor3B & color);
+using CCNodeRGBA_getColor_fn = CCColor3B & (__thiscall*)(void* pThis);
+using CCNodeRGBA_getDisplayedColor_fn = const CCColor3B & (__thiscall*)(void* pThis);
 using CCNodeRGBA_getOpacity_fn = unsigned char(__thiscall*)(void* pThis);
 
 using CCSpriteBatchNode_addchild_fn = void(__thiscall*)(void* pThis, void* child, int zOrder, int tag);
