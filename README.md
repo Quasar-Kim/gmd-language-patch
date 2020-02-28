@@ -1,4 +1,4 @@
-게임 Geometry Dashd의 텍스트를 번역해 표시하는 실험적 프로젝트입니다
+게임 Geometry Dash의 텍스트를 번역해 표시하는 실험적 프로젝트입니다
 
 VS 2019에서 Windows SDK 10.0를 통해 만들어졌습니다.
 
