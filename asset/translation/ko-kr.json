@@ -1,0 +1,6 @@
+{
+  "Are you sure you want to Quit?": "정말 게임을 <cr>종료</c>하시겠습니까?",
+  "Green users are unregistered. Gold users are unique registered. Blue songs are official. Purple songs are custom.": "<cg>초록색</c> 계정들은 등록되지 않았습니다.\n<cy>노란색</c> 계정들은 등록되었습니다.\n<cl>파란색</c> 노래들은 공식 노래들입니다.\n<cp>보라색</c> 노래들은 외부 노래들입니다.",
+  "Visit Newgrounds to find awesome music?": "Newgrounds에 방문해 멋진 음악들을\n찾아보시겠습니까?",
+  "Increases draw capacity for batch nodes at level start. Use to improve performance on some levels. May cause issues on lowend devices.": "처음 레벨을 시작할 때 더 많은 블럭을 그립니다.\n일부 레벨의 성능을 향상시킬 수도 있지만 저사양 기기에서는\n성능 문제를 일으킬 수 있습니다."
+}
