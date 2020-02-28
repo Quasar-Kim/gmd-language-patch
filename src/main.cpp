@@ -28,6 +28,7 @@ json translation;
 void* labelToRenderTranslatedStr;
 bool translatingStr = false;
 int setOpacityModifyRGBCalledTime = 0;
+std::string formatStr;
 std::vector<ColorInfo> colorInfo;
 
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
@@ -80,7 +81,6 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 
 				colorInfo = parseColorMarkup(translatedStr);
 				translatedStr = removeColorMarkup(translatedStr);
-
 				return CCLabelBMFont_setString(pThis, translatedStr.c_str(), true);
 			}
 			translatingMultilineStr = false;
@@ -139,7 +139,13 @@ void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const CCColor3
 
 bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
 {
-	return CCString_initWithFormatAndValist(pThis, format, ap);
+	std::string hookedStr = format;
+	std::string translatedStr = translation.value(hookedStr, hookedStr);
+	if (translatedStr != hookedStr)
+	{
+		formatStr = hookedStr;
+	}
+	return CCString_initWithFormatAndValist(pThis, translatedStr.c_str(), ap);
 }
 
 void __fastcall CCSprite_setOpacityModifyRGB_hookFn(void* pThis, void* _EDX, bool modify)

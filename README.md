@@ -1,8 +1,11 @@
-게임 Geometry Dash의 텍스트를 번역해 표시하는 실험적 프로젝트입니다
-
-VS 2019에서 Windows SDK 10.0를 통해 만들어졌습니다.
+게임 Geometry Dash의 텍스트를 번역해 표시하는 실험적 프로젝트입니다.
 
 ![한글로 번역된 텍스트를 보여주는 스크린샷](asset/screenshot/progress.png)
+
+# 빌드
+1. ```git clone https://github.com/quasar-kim/gmd-language-patch```
+2. Visual Studio 2019로 프로젝트를 연 다음 ```x86```으로 빌드합니다.
+3. 솔루션 디렉토리의 ```bin```에 빌드된 dll이 생성됩니다.
 
 # 구조
 ## asset
