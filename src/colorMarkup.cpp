@@ -13,13 +13,15 @@
 #include "colorMarkup.h"
 
 // TODO: namespace
-// TODO: 적절한 색깔 찾기
+// TODO: color support - orange?
 /* NOTE: 색 코드
 	- g: Green
 	- y: Gold(or Yellow)
 	- l: Blue(or lime blue?)
 	- p: Purple
 	- r: Red
+	- o: Orange
+	- 
 */
 std::vector<ColorInfo> parseColorMarkup(std::string utf8Str)
 {
@@ -53,6 +55,9 @@ std::vector<ColorInfo> parseColorMarkup(std::string utf8Str)
 				break;
 			case 'p':
 				color = labelPurple;
+				break;
+			case 'o':
+				color = labelOrange;
 				break;
 			default:
 				throw std::invalid_argument("Failed to parse color markup string: invalid color");
