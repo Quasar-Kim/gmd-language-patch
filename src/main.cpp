@@ -20,6 +20,7 @@
 #include "CCFunction.h"
 #include "CCConst.h"
 #include "colorMarkup.h"
+#include "translateFormat.h"
 
 using json = nlohmann::json;
 
@@ -31,7 +32,17 @@ int setOpacityModifyRGBCalledTime = 0;
 std::string formatStr;
 std::vector<ColorInfo> colorInfo;
 
-// TODO: formatStr 비우기
+bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
+{
+	auto translationEntry = translation.find(format);
+	if (translationEntry != translation.end())
+	{
+		formatStr = std::string(format);
+	}
+	return CCString_initWithFormatAndValist(pThis, format, ap);
+}
+
+// TODO: 여기서 formatStr 비우기
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
 	// 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
 	std::string hookedStr = labelStr;
@@ -57,12 +68,25 @@ void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const ch
 			{
 				// 여러 줄 텍스트의 마지막
 				fullMultilineStr += hookedStr;
-				translatedStr = translation.value(fullMultilineStr, TRANSLATION_NOT_FOUND_STR);
+				hookedStr = fullMultilineStr;
 				fullMultilineStr = "";
+			}
+
+			// format된 텍스트 처리
+			if (formatStr.length() > 0)
+			{
+				try
+				{
+					translatedStr = translateFormat(hookedStr, formatStr, TRANSLATION_NOT_FOUND_STR, translation);
+				}
+				catch (std::invalid_argument & e)
+				{
+					translatedStr = translation.value(hookedStr, TRANSLATION_NOT_FOUND_STR);
+				}
+				formatStr = "";
 			}
 			else
 			{
-				// 한 줄 텍스트
 				translatedStr = translation.value(hookedStr, TRANSLATION_NOT_FOUND_STR);
 			}
 
@@ -136,16 +160,6 @@ void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const CCColor3
 		return;
 	}
 	return CCSprite_setColor(pThis, color);
-}
-
-bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
-{
-	auto translationEntry = translation.find(format);
-	if (translationEntry != translation.end())
-	{
-		formatStr = std::string(format);
-	}
-	return CCString_initWithFormatAndValist(pThis, format, ap);
 }
 
 void __fastcall CCSprite_setOpacityModifyRGB_hookFn(void* pThis, void* _EDX, bool modify)

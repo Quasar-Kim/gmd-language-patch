@@ -1,27 +1,37 @@
+#include "pch.h"
 #include <string>
 #include <regex>
+#include <algorithm>
 #include "json.hpp"
+#include "translateFormat.h"
+#include "colorMarkup.h"
 
 using json = nlohmann::json;
 
-std::string translateFormat(std::string formattedStr, std::string formatStr, std::string defaultStr, const json& translation)
+std::string translateFormat(std::string formattedStr, std::string rawFormatStr, std::string defaultStr, const json& translation)
 {
 	std::string translatedStr;
-	if (formatStr.length() > 0)
+	if (rawFormatStr.length() > 0)
 	{
-		auto translationEntry_it = translation.find(formatStr);
+		auto translationEntry_it = translation.find(rawFormatStr);
 		if (translationEntry_it != translation.end())
 		{
+			// \n -> 공백, 색 표시 제거
+			std::string formatStr = removeColorMarkup(rawFormatStr);
+			std::replace(formatStr.begin(), formatStr.end(), '\n', ' ');
+			formatStr = std::regex_replace(formatStr, std::regex("%%"), "%");
+
 			// 1. regex 이용해 formatStr에서 placeholder 위치 찾아내기
 			json translationEntry = *translationEntry_it;
 			std::string translatedFormatStr = translationEntry["format"];
 			std::vector<std::string> dynamicParts;
 			std::vector<int> dynamicPartsPos;
 			std::smatch matchResult;
-			std::regex matchPlaceholder("%(?:c|s|u|f|F|d)");
+			std::regex matchPlaceholder("%(?:c|i|s|u|f|F|d)");
 
 			std::string::const_iterator searchStart(formatStr.cbegin());
 			int skippedWhileSearch = 0;
+
 			while (std::regex_search(searchStart, formatStr.cend(), matchResult, matchPlaceholder))
 			{
 				dynamicPartsPos.push_back(matchResult.position() + skippedWhileSearch);
@@ -29,10 +39,14 @@ std::string translateFormat(std::string formattedStr, std::string formatStr, std
 				skippedWhileSearch += matchResult.position() + matchResult.length();
 			}
 
+			int nextDynamicPartStart;
 			for (size_t i = 0; i < dynamicPartsPos.size(); ++i)
 			{
 				int placeholderPos = dynamicPartsPos[i];
-				static int nextDynamicPartStart = placeholderPos;
+				if (i == 0)
+				{
+					nextDynamicPartStart = placeholderPos;
+				}
 				// 2. formatStr의 placeholder + 1부터 다음 placeholder까지의 substr 가져오기
 				std::string nextStaticPart;
 				if (i + 1 == dynamicPartsPos.size())
@@ -59,16 +73,21 @@ std::string translateFormat(std::string formattedStr, std::string formatStr, std
 				}
 			}
 
-			// 5. translatedFormatStr을 regex 이용해 덮어쓰기
-			// key - dest(translatedFormatStr)의 index
-			for (const auto& item : translationEntry["parts"].items())
+			std::vector<std::string> translatedDynamicParts = dynamicParts;
+			auto partsEntry = translationEntry["parts"];
+			for (size_t i = 0; i < dynamicParts.size(); ++i)
 			{
-				auto partEntry = item.value();
-				
-				int sourcePartIndex = partEntry["_sourcePart"];
-				std::string sourcePart = dynamicParts[sourcePartIndex];
-				std::string translatedPart = partEntry.value(sourcePart, sourcePart);
+				if (i < partsEntry.size())
+				{
+					auto sourceDynamicPart = dynamicParts[i];
+					int destPartIndex = partsEntry[i].value("_destPart", i);
+					std::string translatedPart = partsEntry[i].value(sourceDynamicPart, sourceDynamicPart);
+					translatedDynamicParts[destPartIndex] = translatedPart;
+				}
+			}
 
+			for (auto& translatedPart : translatedDynamicParts)
+			{
 				translatedFormatStr = std::regex_replace(translatedFormatStr, matchPlaceholder, translatedPart, std::regex_constants::format_first_only);
 			}
 			translatedStr = translatedFormatStr;

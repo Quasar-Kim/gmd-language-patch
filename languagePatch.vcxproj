@@ -39,6 +39,7 @@
     <ClInclude Include="src\framework.h" />
     <ClInclude Include="src\main.h" />
     <ClInclude Include="src\pch.h" />
+    <ClInclude Include="translateFormat.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="asset\translation\reference\extradtedText.txt" />
