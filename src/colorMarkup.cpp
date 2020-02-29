@@ -13,7 +13,6 @@
 #include "colorMarkup.h"
 
 // TODO: namespace
-// TODO: color support - orange?
 /* NOTE: »ö ÄÚµå
 	- g: Green
 	- y: Gold(or Yellow)

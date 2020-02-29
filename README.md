@@ -1,12 +1,15 @@
-게임 Geometry Dash의 텍스트를 번역해 표시하는 실험적 프로젝트입니다
-
-VS 2019에서 Windows SDK 10.0를 통해 만들어졌습니다.
+게임 Geometry Dash의 텍스트를 번역해 표시하는 실험적 프로젝트입니다.
 
 ![한글로 번역된 텍스트를 보여주는 스크린샷](asset/screenshot/progress.png)
 
+# 빌드
+1. ```git clone https://github.com/quasar-kim/gmd-language-patch```
+2. Visual Studio 2019로 프로젝트를 연 다음 ```x86```으로 빌드합니다.
+3. 솔루션 디렉토리의 ```bin```에 빌드된 dll이 생성됩니다.
+
 # 구조
 ## asset
-### fonts
+### font
 게임 내에서 한글을 띄우기 위해 필요한 비트맵 폰트들입니다.
 
 게임 리소스 폴더 내의 폰트 파일들 덮어쓰기하면 사용할 수 있습니다.
@@ -15,10 +18,12 @@ VS 2019에서 Windows SDK 10.0를 통해 만들어졌습니다.
 #### 폰트 목록
 > 이 페이지에는 우아한형제들에서 제공한 배달의민족 한나체가 포함되어 있습니다.
 
+__굵은__ 그래픽 옵션은 해당 폰트에 권장되는 그래픽입니다.
+
  - ChatFont
-   - 나눔고딕(Graphic: Low)
+   - 나눔고딕(그래픽 옵션: Low, __medium__)
  - BigFont
-   - 배달의 민족 주아(Graphic: Low)
+   - 배달의 민족 주아(그래픽 옵션: Low)
 
 
 ### translation
@@ -40,7 +45,8 @@ VS 2019에서 Windows SDK 10.0를 통해 만들어졌습니다.
 # To-Do
 - [X] ~~*여러 줄 텍스트 지원*~~
 - [X] ~~*번역된 텍스트에 색깔 입히기 지원*~~
-- [ ] 포맷 문자열 지원(Ex: ```Total Attempts:%i```);
+- [X] ~~*포맷 문자열 지원(Ex: ```Total Attempts:%i```)*~~
+
 - [ ] DLL Injection 기능을 갖춘 커스텀 게임 런처
 
 # 라이선스
