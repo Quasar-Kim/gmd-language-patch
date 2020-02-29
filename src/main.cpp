@@ -31,6 +31,7 @@ int setOpacityModifyRGBCalledTime = 0;
 std::string formatStr;
 std::vector<ColorInfo> colorInfo;
 
+// TODO: formatStr 비우기
 void __fastcall CCLabelBMFont_setString_hookFn(void* pThis, void* _EDX, const char* labelStr, bool needUpdateLabel) {
 	// 두 줄 이상 텍스트가 걸렸을때 해당 변수의 값이 true면 label을 숨깁니다
 	std::string hookedStr = labelStr;
@@ -113,7 +114,7 @@ void __fastcall CCNode_setParent_hookFn(void* pThis, void* _EDX, void* parent)
 			const CCSize& dialogParentSize = CCNode_getContentSize(dialogSprite);
 			CCPoint centerPos = { dialogParentSize.width / 2, dialogParentSize.height / 2 };
 			CCPoint anchorPoint = { 0.5, 0.5 };
-			
+
 			CCSprite_setPosition(labelToRenderTranslatedStr, centerPos);
 			CCLabelBMFont_setAnchorPoint(labelToRenderTranslatedStr, anchorPoint);
 			CCLabelBMFont_setAlignment(labelToRenderTranslatedStr, CC_TEXT_ALIGNMENT_CENTER);
@@ -139,13 +140,12 @@ void __fastcall CCSprite_setColor_hookFn(void* pThis, void* _EDX, const CCColor3
 
 bool __fastcall CCString_initWithFormatAndValist_hookFn(void* pThis, void* _EDX, const char* format, va_list ap)
 {
-	std::string hookedStr = format;
-	std::string translatedStr = translation.value(hookedStr, hookedStr);
-	if (translatedStr != hookedStr)
+	auto translationEntry = translation.find(format);
+	if (translationEntry != translation.end())
 	{
-		formatStr = hookedStr;
+		formatStr = std::string(format);
 	}
-	return CCString_initWithFormatAndValist(pThis, translatedStr.c_str(), ap);
+	return CCString_initWithFormatAndValist(pThis, format, ap);
 }
 
 void __fastcall CCSprite_setOpacityModifyRGB_hookFn(void* pThis, void* _EDX, bool modify)
